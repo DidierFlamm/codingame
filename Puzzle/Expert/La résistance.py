@@ -21,6 +21,8 @@ Un être humain est capable de reconnaître le découpage adéquat grâce à sa 
 Cependant, même avec un dictionnaire, il est possible qu'une séquence puisse correspondre à plusieurs messages valides (BAC, DUC, DU et TETE pourraient être présents dans le dictionnaire de l'exemple précédent).
 
 Source : ACM Contest Problems Archive
+
+
         Entrées du jeu
 Entrée
 Ligne 1 : une séquence Morse de longueur maximale L
@@ -78,16 +80,7 @@ def input():
 
 ######################################
 
-import sys
-
-l = input()
-n = int(input())
-words = [input() for _ in range(n)]
-word_max_length = max([len(word) for word in words])
-
-print(l, words, file=sys.stderr, flush=True)
-
-print("word max lenght:", word_max_length, file=sys.stderr, flush=True)
+import sys  # noqa: E402
 
 morse = {
     ".-": "A",
@@ -118,8 +111,54 @@ morse = {
     "--..": "Z",
 }
 
+import sys  # noqa: E402
 
-def decode_head(l):
+
+def log(*args, **kwargs):
+    print(*args, **kwargs, file=sys.stderr, flush=True)
+
+
+morse = {
+    ".": "E",
+    "-": "T",
+    "..": "I",
+    ".-": "A",
+    "-.": "N",
+    "--": "M",
+    "...": "S",
+    "..-": "U",
+    ".-.": "R",
+    ".--": "W",
+    "-..": "D",
+    "-.-": "K",
+    "--.": "G",
+    "---": "O",
+    "....": "H",
+    "...-": "V",
+    "..-.": "F",
+    ".-..": "L",
+    ".--.": "P",
+    ".---": "J",
+    "-...": "B",
+    "-..-": "X",
+    "-.-.": "C",
+    "-.--": "Y",
+    "--..": "Z",
+    "--.-": "Q",
+}
+
+
+l = input()  # noqa: E741
+n = int(input())
+words = [input() for _ in range(n)]
+word_max_length = max([len(word) for word in words])
+
+log(l, words)
+
+log("word max length:", word_max_length)
+
+
+def decode_head(l):  # noqa: E741
     dict_head = {}
     for length in range(1, 5):  # max 4 signes par lettre en morse
         for code in list(morse.keys()):
@@ -128,25 +167,17 @@ def decode_head(l):
     return dict_head
 
 
-def decode(l):
-    dict_l = {}
-    for length in range(1, word_max_length + 1):
-        dict_head = decode_head(l[:length])
-        print(dict_head, file=sys.stderr, flush=True)
+# 1ère lettre
+dict_1 = decode_head(l)
+log(dict_1)
 
-
-dict_head = decode_head(l)
-
-print(dict_head, file=sys.stderr, flush=True)
-
-
-letters_in_words = []
-
-for letter in letters:
+# purge des clés qui ne sont pas compatibles avec words
+dict_1_clean = {}
+for key, value in dict_1.items():
     for word in words:
-        if letter == word:
-            letters_in_words.append(letter)
+        if word[0] == key:
+            dict_1_clean[key] = value
 
-print(letters, file=sys.stderr, flush=True)
+log(dict_1_clean)
 
-print(len(letters_in_words))
+print(len(dict_1_clean))
