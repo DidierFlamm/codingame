@@ -70,6 +70,11 @@ entries = [
     "TEST",
 ]
 
+# test 5
+entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
+
+# => 125
+
 # test 6
 
 # entries = ["..............................................", "2", "E", "I"]
@@ -116,9 +121,9 @@ morse = {
     "--..": "Z",
 }
 
-inv_morse = {value: key for key, value in list(morse.items())}
 
 import sys  # noqa: E402
+from collections import defaultdict  # noqa: E402
 
 
 def log(*args, **kwargs):
@@ -154,19 +159,20 @@ morse = {
     "--.-": "Q",
 }
 
+inv_morse = {value: key for key, value in list(morse.items())}
 
 l_ = input()
 n = int(input())
 words = [input() for _ in range(n)]
 word_max_length = max([len(word) for word in words])
 
-log(l_)
-log(words)
+log("l_=", l_)
+log("words =", words)
 
-log("word max length:", word_max_length)
+log("word_max_length =", word_max_length)
 
 # memoize tous les morse des mots du dictionnaire
-memo_words = []
+codes = []
 
 
 def encode(word):
@@ -177,53 +183,56 @@ def encode(word):
 
 
 for word in words:
-    memo_words.append(encode(word))
+    codes.append(encode(word))
 
-log(memo_words)
+code_max_length = max([len(code) for code in codes])
 
+log("code_max_length =", code_max_length)
+log("codes =", codes)
 
-def decode_head(string):
-    dict_head = {}
-    string_head = string[:word_max_length]
-    string_tail = string[word_max_length:]
-
-    for length in range(1, 5):  # max 4 signes par lettre en morse
-        for code in list(morse.keys()):
-            if code == string[:length] and len(code) == length:
-                dict_head[morse[code]] = string[length:]
-
-    # memo_head[string_head]=
-
-    return dict_head
+morse_dict = {"": l_}
+match = defaultdict(list)
+mismatch = []
 
 
-# 1ere lettre
-def init_dict(string):
-    dict_init = decode_head(string)
-    log(dict_init)
-
-    # purge des clés qui ne sont pas compatibles avec words
-
-    dict_temp = dict_init
-
-    dict_init = {}
-
-    for key, value in dict_temp.items():
-        for word in words:
-            if word.startswith(key):
-                dict_init[key] = value
-                # if key == word:
-                #    dict_init[key + "_"] = value
-                break
-
-    log(dict_init)
-
-    return dict_init
+def compute_dict(morse_dict, match, mismatch, code_max_length):
+    new_dict = {key: value for key, value in list(morse_dict.items()) if not value}
+    for key, value in list(morse_dict.items()):
+        head = value[:code_max_length]
+        found = False
+        for code in codes:
+            if head.startswith(code):
+                found = True
+                remaining = value[len(code) :]
+                new_dict[key + "_" + code] = remaining
+                if len(remaining):
+                    go_on = True
+                match[head].append(morse)
+        if not found:
+            mismatch.append(head)
+    return new_dict, match, mismatch
 
 
-# lettre suivante
-def next_dict(dict_alpha_morse):
-    global mismatch
+for _ in range(100):
+    morse_dict, match, mismatch = compute_dict(
+        morse_dict, match, mismatch, code_max_length
+    )
+    log(morse_dict)
+
+# dict_alpha_morse = finalize_dict(dict_alpha_morse)
+
+result = len(morse_dict)
+
+print(result)
+
+"""
+# mot suivant
+def next_dict(morse_dict, match, mismatch):
+    next_morse_dict
+    
+        temp_dict = 
+        next_morse_dict[]
+
 
     # ajoute les différentes possibilité de 'prochaine lettre' à toutes les clés si c'est pas un mismatch connu
 
@@ -282,3 +291,4 @@ for _ in range(10):
 result = len(dict_alpha_morse)
 
 print(len(dict_alpha_morse))
+"""
