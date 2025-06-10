@@ -152,7 +152,8 @@ n = int(input())
 words = [input() for _ in range(n)]
 word_max_length = max([len(word) for word in words])
 
-log(l_, words)
+log(l_)
+log(words)
 
 log("word max length:", word_max_length)
 
@@ -181,8 +182,8 @@ def init_dict(string):
         for word in words:
             if word.startswith(key):
                 dict_init[key] = value
-            if key == word:
-                dict_init[key + "_"] = value
+                # if key == word:
+                #    dict_init[key + "_"] = value
                 break
 
     log(dict_init)
@@ -192,6 +193,9 @@ def init_dict(string):
 
 # lettre suivante
 def next_dict(dict_alpha_morse):
+
+    # ajoute les différentes possibilité de 'prochaine lettre' à toutes les clés
+
     for cle, value in list(dict_alpha_morse.items()):
         if value:
             del dict_alpha_morse[cle]
@@ -209,10 +213,21 @@ def next_dict(dict_alpha_morse):
     dict_alpha_morse = {}
 
     for key, value in dict_temp.items():
+
         for word in words:
-            if word.startswith(key):
+
+            last_key = key.split("_")[-1]
+
+            # si la fin de clé correspond à un mot, et qu'il reste du morse, on ajoute la clé avec _
+            if last_key == word and value:
+                dict_alpha_morse[key + "_"] = value
+
+            # si la fin de clé correspond au début d'un mot, on ajoute la clé
+            if word.startswith(last_key):
                 dict_alpha_morse[key] = value
                 break
+
+    # on pourrait sortir les clés terminées dans une liste à part pour réduire la taille du dictionnaire
 
     log(dict_alpha_morse)
 
@@ -223,5 +238,9 @@ dict_alpha_morse = init_dict(l_)
 
 for _ in range(10):
     dict_alpha_morse = next_dict(dict_alpha_morse)
+
+# dict_alpha_morse = finalize_dict(dict_alpha_morse)
+
+result = len(dict_alpha_morse)
 
 print(len(dict_alpha_morse))
