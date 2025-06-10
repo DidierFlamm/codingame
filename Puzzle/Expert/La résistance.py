@@ -96,7 +96,7 @@ def input():
 
 
 import sys  # noqa: E402
-from collections import defaultdict  # noqa: E402
+from collections import defaultdict, Counter  # noqa: E402
 import time
 
 start_time = time.perf_counter()
@@ -143,7 +143,6 @@ word_max_length = max([len(word) for word in words])
 
 log("l_=", l_)
 log("words =", words)
-
 log("word_max_length =", word_max_length)
 
 # compute tous les morse des mots du dictionnaire
@@ -158,6 +157,14 @@ def encode(word):
 
 for word in words:
     codes.append(encode(word))
+
+# compute code_counter
+
+code_counter = Counter(codes)
+unique_codes = [key for key in list(code_counter.keys())]
+
+log(code_counter)
+log(unique_codes)
 
 # et leur longueur
 get_code_length = [len(code) for code in codes]
@@ -174,7 +181,8 @@ go_on = True
 
 
 
-def compute_dict(morse_dict, match, mismatch, code_max_length):
+
+def compute_dict(morse_dict, memo, code_max_length):
     go_on = False
     new_dict = {key: value for key, value in list(morse_dict.items()) if not value}
     for key, value in list(morse_dict.items()):
@@ -202,14 +210,15 @@ def compute_dict(morse_dict, match, mismatch, code_max_length):
         
         #if not found:
         #    mismatch.append(head)
-    return new_dict, memo, mismatch, go_on
+    return new_dict, memo, go_on
 
 
 while go_on:
-    morse_dict, match, mismatch, go_on = compute_dict(
-        morse_dict, memo, mismatch, code_max_length
+    morse_dict, memo, go_on = compute_dict(
+        morse_dict, memo, code_max_length
     )
-    log(memo)
+
+print(morse_dict)
 
 # dict_alpha_morse = finalize_dict(dict_alpha_morse)
 
