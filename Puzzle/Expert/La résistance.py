@@ -70,6 +70,9 @@ entries = [
     "TEST",
 ]
 
+
+
+
 # test 5
 entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
 
@@ -77,7 +80,7 @@ entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
 
 # test 6
 
-entries = ["..............................................", "2", "E", "I"]
+#entries = ["..............................................", "2", "E", "I"]
 
 # => 2971215073
 
@@ -94,7 +97,9 @@ def input():
 
 import sys  # noqa: E402
 from collections import defaultdict  # noqa: E402
+import time
 
+start_time = time.perf_counter()
 
 def log(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr, flush=True)
@@ -141,9 +146,8 @@ log("words =", words)
 
 log("word_max_length =", word_max_length)
 
-# memoize tous les morse des mots du dictionnaire
+# compute tous les morse des mots du dictionnaire
 codes = []
-
 
 def encode(word):
     code = ""
@@ -155,15 +159,19 @@ def encode(word):
 for word in words:
     codes.append(encode(word))
 
+# et leur longueur
+get_code_length = [len(code) for code in codes]
+
 code_max_length = max([len(code) for code in codes])
 
 log("code_max_length =", code_max_length)
 log("codes =", codes)
 
 morse_dict = {"": l_}
-match = defaultdict(list)
+memo = defaultdict(list)
 mismatch = []
 go_on = True
+
 
 
 def compute_dict(morse_dict, match, mismatch, code_max_length):
@@ -171,28 +179,42 @@ def compute_dict(morse_dict, match, mismatch, code_max_length):
     new_dict = {key: value for key, value in list(morse_dict.items()) if not value}
     for key, value in list(morse_dict.items()):
         head = value[:code_max_length]
-        found = False
-        for idx, code in enumerate(codes):
-            if head.startswith(code):
-                found = True
-                remaining = value[len(code) :]
+        
+        #si déjà connu
+        if head in memo:
+            for idx in memo[head]:
+                remaining = value[get_code_length[idx] :]
                 new_dict[key + f"_{idx}"] = remaining
                 if len(remaining):
                     go_on = True
-                match[head].append(morse)
-        if not found:
-            mismatch.append(head)
-    return new_dict, match, mismatch, go_on
+
+        
+        else:
+            for idx, code in enumerate(codes):
+                if head.startswith(code):
+            #        found = True
+                    remaining = value[len(code) :]
+                    new_dict[key + f"_{idx}"] = remaining
+                    if len(remaining):
+                        go_on = True
+                    memo[head].append(idx)
+                    #log(memo)
+        
+        #if not found:
+        #    mismatch.append(head)
+    return new_dict, memo, mismatch, go_on
 
 
-for _ in range(1000):
+while go_on:
     morse_dict, match, mismatch, go_on = compute_dict(
-        morse_dict, match, mismatch, code_max_length
+        morse_dict, memo, mismatch, code_max_length
     )
-    # log(morse_dict)
+    log(memo)
 
 # dict_alpha_morse = finalize_dict(dict_alpha_morse)
 
 result = len(morse_dict)
 
 print(result)
+
+print(time.perf_counter()-start_time)
