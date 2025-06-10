@@ -77,7 +77,7 @@ entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
 
 # test 6
 
-# entries = ["..............................................", "2", "E", "I"]
+entries = ["..............................................", "2", "E", "I"]
 
 # => 2971215073
 
@@ -90,36 +90,6 @@ def input():
 
 
 ######################################
-
-
-morse = {
-    ".-": "A",
-    "-...": "B",
-    "-.-.": "C",
-    "-..": "D",
-    ".": "E",
-    "..-.": "F",
-    "--.": "G",
-    "....": "H",
-    "..": "I",
-    ".---": "J",
-    "-.-": "K",
-    ".-..": "L",
-    "--": "M",
-    "-.": "N",
-    "---": "O",
-    ".--.": "P",
-    "--.-": "Q",
-    ".-.": "R",
-    "...": "S",
-    "-": "T",
-    "..-": "U",
-    "...-": "V",
-    ".--": "W",
-    "-..-": "X",
-    "-.--": "Y",
-    "--..": "Z",
-}
 
 
 import sys  # noqa: E402
@@ -193,102 +163,36 @@ log("codes =", codes)
 morse_dict = {"": l_}
 match = defaultdict(list)
 mismatch = []
+go_on = True
 
 
 def compute_dict(morse_dict, match, mismatch, code_max_length):
+    go_on = False
     new_dict = {key: value for key, value in list(morse_dict.items()) if not value}
     for key, value in list(morse_dict.items()):
         head = value[:code_max_length]
         found = False
-        for code in codes:
+        for idx, code in enumerate(codes):
             if head.startswith(code):
                 found = True
                 remaining = value[len(code) :]
-                new_dict[key + "_" + code] = remaining
+                new_dict[key + f"_{idx}"] = remaining
                 if len(remaining):
                     go_on = True
                 match[head].append(morse)
         if not found:
             mismatch.append(head)
-    return new_dict, match, mismatch
+    return new_dict, match, mismatch, go_on
 
 
-for _ in range(100):
-    morse_dict, match, mismatch = compute_dict(
+for _ in range(1000):
+    morse_dict, match, mismatch, go_on = compute_dict(
         morse_dict, match, mismatch, code_max_length
     )
-    log(morse_dict)
+    # log(morse_dict)
 
 # dict_alpha_morse = finalize_dict(dict_alpha_morse)
 
 result = len(morse_dict)
 
 print(result)
-
-"""
-# mot suivant
-def next_dict(morse_dict, match, mismatch):
-    next_morse_dict
-    
-        temp_dict = 
-        next_morse_dict[]
-
-
-    # ajoute les différentes possibilité de 'prochaine lettre' à toutes les clés si c'est pas un mismatch connu
-
-    for cle, value in list(dict_alpha_morse.items()):
-        if value:
-            del dict_alpha_morse[cle]
-            dict_temp = decode_head(value)
-
-            for key_temp, value_temp in list(dict_temp.items()):
-                if cle.split("_")[-1] + key_temp not in memo_mismatch:
-                    dict_alpha_morse[cle + key_temp] = value_temp
-
-    log(dict_alpha_morse)
-
-    # purge des clés qui ne sont pas compatibles avec words
-
-    dict_temp = dict_alpha_morse
-
-    dict_alpha_morse = {}
-
-    for key, value in dict_temp.items():
-
-        for word in words:
-
-            last_key = key.split("_")[-1]
-
-            # si la fin de clé correspond à un mot, et qu'il reste du morse, on ajoute la clé avec _
-            if last_key == word and value:
-                dict_alpha_morse[key + "_"] = value
-
-            # si la fin de clé correspond au début d'un mot, on ajoute la clé
-            elif word.startswith(last_key):
-                dict_alpha_morse[key] = value
-                break
-
-            # sinon ajoute la fin de clé aux mismatch
-            else:
-                memo_mismatch.add(last_key)
-
-    # on pourrait sortir les clés terminées dans une liste à part pour réduire la taille du dictionnaire
-
-    log(dict_alpha_morse)
-
-    return dict_alpha_morse
-
-
-memo_mismatch = set()
-
-dict_alpha_morse = init_dict(l_)
-
-for _ in range(10):
-    dict_alpha_morse = next_dict(dict_alpha_morse)
-
-# dict_alpha_morse = finalize_dict(dict_alpha_morse)
-
-result = len(dict_alpha_morse)
-
-print(len(dict_alpha_morse))
-"""
