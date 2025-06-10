@@ -45,16 +45,16 @@ value_to_reach = int(input())
 n = int(input())
 counts = [int(i) for i in input().split()]
 values = [int(i) for i in input().split()]
-coins = dict(sorted({value: count for value, count in zip(values, counts)}.items()))
+coins = dict({value: count for value, count in sorted(zip(values, counts))})
 
 money = 0
 n_coins = 0
 enough = False
 
-for item in list(coins.items()):
-    for _ in range(item[1]):
+for key, value in list(coins.items()):
+    for _ in range(value):
         n_coins += 1
-        money += item[0]
+        money += key
         if money >= value_to_reach:
             print(n_coins)
             enough = True
