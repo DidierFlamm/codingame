@@ -147,28 +147,28 @@ morse = {
 }
 
 
-l = input()  # noqa: E741
+l_ = input()
 n = int(input())
 words = [input() for _ in range(n)]
 word_max_length = max([len(word) for word in words])
 
-log(l, words)
+log(l_, words)
 
 log("word max length:", word_max_length)
 
 
-def decode_head(l):  # noqa: E741
+def decode_head(l_):
     dict_head = {}
     for length in range(1, 5):  # max 4 signes par lettre en morse
         for code in list(morse.keys()):
-            if code == l[:length] and len(code) == length:
-                dict_head[morse[code]] = l[length:]
+            if code == l_[:length] and len(code) == length:
+                dict_head[morse[code]] = l_[length:]
     return dict_head
 
 
 # 1ere lettre
-def first_letter(l):
-    dict_total = decode_head(l)
+def first_letter(l_):
+    dict_total = decode_head(l_)
     log(dict_total)
 
     # purge des clés qui ne sont pas compatibles avec words
@@ -219,7 +219,7 @@ def next_letter(dict_total):
     return dict_total
 
 
-dict_total = first_letter(l)
+dict_total = first_letter(l_)
 
 for _ in range(10):
     dict_total = next_letter(dict_total)
