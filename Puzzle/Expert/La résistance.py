@@ -157,71 +157,71 @@ log(l_, words)
 log("word max length:", word_max_length)
 
 
-def decode_head(l_):
+def decode_head(string):
     dict_head = {}
     for length in range(1, 5):  # max 4 signes par lettre en morse
         for code in list(morse.keys()):
-            if code == l_[:length] and len(code) == length:
-                dict_head[morse[code]] = l_[length:]
+            if code == string[:length] and len(code) == length:
+                dict_head[morse[code]] = string[length:]
     return dict_head
 
 
 # 1ere lettre
-def first_letter(l_):
-    dict_total = decode_head(l_)
-    log(dict_total)
+def init_dict(string):
+    dict_init = decode_head(string)
+    log(dict_init)
 
     # purge des clés qui ne sont pas compatibles avec words
 
-    dict_temp = dict_total
+    dict_temp = dict_init
 
-    dict_total = {}
+    dict_init = {}
 
     for key, value in dict_temp.items():
         for word in words:
             if word.startswith(key):
-                dict_total[key] = value
+                dict_init[key] = value
             if key == word:
-                dict_total[key + "_"] = value
+                dict_init[key + "_"] = value
                 break
 
-    log(dict_total)
+    log(dict_init)
 
-    return dict_total
+    return dict_init
 
 
 # lettre suivante
-def next_letter(dict_total):
-    for cle, value in list(dict_total.items()):
+def next_dict(dict_alpha_morse):
+    for cle, value in list(dict_alpha_morse.items()):
         if value:
-            del dict_total[cle]
+            del dict_alpha_morse[cle]
             dict_2 = decode_head(value)
 
             for cle_2, value_2 in list(dict_2.items()):
-                dict_total[cle + cle_2] = value_2
+                dict_alpha_morse[cle + cle_2] = value_2
 
-    log(dict_total)
+    log(dict_alpha_morse)
 
     # purge des clés qui ne sont pas compatibles avec words
 
-    dict_temp = dict_total
+    dict_temp = dict_alpha_morse
 
-    dict_total = {}
+    dict_alpha_morse = {}
 
     for key, value in dict_temp.items():
         for word in words:
             if word.startswith(key):
-                dict_total[key] = value
+                dict_alpha_morse[key] = value
                 break
 
-    log(dict_total)
+    log(dict_alpha_morse)
 
-    return dict_total
+    return dict_alpha_morse
 
 
-dict_total = first_letter(l_)
+dict_alpha_morse = init_dict(l_)
 
 for _ in range(10):
-    dict_total = next_letter(dict_total)
+    dict_alpha_morse = next_dict(dict_alpha_morse)
 
-print(len(dict_total))
+print(len(dict_alpha_morse))
