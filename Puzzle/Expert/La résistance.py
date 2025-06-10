@@ -70,6 +70,12 @@ entries = [
     "TEST",
 ]
 
+# test 6
+
+# entries = ["..............................................", "2", "E", "I"]
+
+# => 2971215073
+
 
 generator = (entry for entry in entries)
 
@@ -109,6 +115,8 @@ morse = {
     "-.--": "Y",
     "--..": "Z",
 }
+
+inv_morse = {value: key for key, value in list(morse.items())}
 
 import sys  # noqa: E402
 
@@ -157,13 +165,35 @@ log(words)
 
 log("word max length:", word_max_length)
 
+# memoize tous les morse des mots du dictionnaire
+memo_words = []
+
+
+def encode(word):
+    code = ""
+    for l_ in word:
+        code += inv_morse[l_]
+    return code
+
+
+for word in words:
+    memo_words.append(encode(word))
+
+log(memo_words)
+
 
 def decode_head(string):
     dict_head = {}
+    string_head = string[:word_max_length]
+    string_tail = string[word_max_length:]
+
     for length in range(1, 5):  # max 4 signes par lettre en morse
         for code in list(morse.keys()):
             if code == string[:length] and len(code) == length:
                 dict_head[morse[code]] = string[length:]
+
+    # memo_head[string_head]=
+
     return dict_head
 
 
@@ -193,16 +223,18 @@ def init_dict(string):
 
 # lettre suivante
 def next_dict(dict_alpha_morse):
+    global mismatch
 
-    # ajoute les différentes possibilité de 'prochaine lettre' à toutes les clés
+    # ajoute les différentes possibilité de 'prochaine lettre' à toutes les clés si c'est pas un mismatch connu
 
     for cle, value in list(dict_alpha_morse.items()):
         if value:
             del dict_alpha_morse[cle]
-            dict_2 = decode_head(value)
+            dict_temp = decode_head(value)
 
-            for cle_2, value_2 in list(dict_2.items()):
-                dict_alpha_morse[cle + cle_2] = value_2
+            for key_temp, value_temp in list(dict_temp.items()):
+                if cle.split("_")[-1] + key_temp not in memo_mismatch:
+                    dict_alpha_morse[cle + key_temp] = value_temp
 
     log(dict_alpha_morse)
 
@@ -223,9 +255,13 @@ def next_dict(dict_alpha_morse):
                 dict_alpha_morse[key + "_"] = value
 
             # si la fin de clé correspond au début d'un mot, on ajoute la clé
-            if word.startswith(last_key):
+            elif word.startswith(last_key):
                 dict_alpha_morse[key] = value
                 break
+
+            # sinon ajoute la fin de clé aux mismatch
+            else:
+                memo_mismatch.add(last_key)
 
     # on pourrait sortir les clés terminées dans une liste à part pour réduire la taille du dictionnaire
 
@@ -233,6 +269,8 @@ def next_dict(dict_alpha_morse):
 
     return dict_alpha_morse
 
+
+memo_mismatch = set()
 
 dict_alpha_morse = init_dict(l_)
 
