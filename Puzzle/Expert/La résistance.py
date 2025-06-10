@@ -167,50 +167,31 @@ def decode_head(l):  # noqa: E741
 
 
 # 1ere lettre
-dict_total = decode_head(l)
-log(dict_total)
+def first_letter(l):
+    dict_total = decode_head(l)
+    log(dict_total)
 
-# purge des clés qui ne sont pas compatibles avec words
+    # purge des clés qui ne sont pas compatibles avec words
 
-dict_temp = dict_total
+    dict_temp = dict_total
 
-dict_total = {}
+    dict_total = {}
 
-for key, value in dict_temp.items():
-    for word in words:
-        if word.startswith(key):
-            dict_total[key] = value
-            break
+    for key, value in dict_temp.items():
+        for word in words:
+            if word.startswith(key):
+                dict_total[key] = value
+            if key == word:
+                dict_total[key + "_"] = value
+                break
 
-log(dict_total)
+    log(dict_total)
+
+    return dict_total
 
 
 # lettre suivante
-for cle, value in list(dict_total.items()):
-    if value:
-        del dict_total[cle]
-        dict_2 = decode_head(value)
-
-        for cle_2, value_2 in list(dict_2.items()):
-            dict_total[cle + cle_2] = value_2
-
-log(dict_total)
-
-# purge des clés qui ne sont pas compatibles avec words
-
-dict_temp = dict_total
-
-dict_total = {}
-
-for key, value in dict_temp.items():
-    for word in words:
-        if word.startswith(key):
-            dict_total[key] = value
-            break
-
-for _ in range(10):
-
-    # lettre suivante
+def next_letter(dict_total):
     for cle, value in list(dict_total.items()):
         if value:
             del dict_total[cle]
@@ -234,5 +215,13 @@ for _ in range(10):
                 break
 
     log(dict_total)
+
+    return dict_total
+
+
+dict_total = first_letter(l)
+
+for _ in range(10):
+    dict_total = next_letter(dict_total)
 
 print(len(dict_total))
