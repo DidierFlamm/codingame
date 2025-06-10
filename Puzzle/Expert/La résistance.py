@@ -80,7 +80,6 @@ def input():
 
 ######################################
 
-import sys  # noqa: E402
 
 morse = {
     ".-": "A",
@@ -167,17 +166,73 @@ def decode_head(l):  # noqa: E741
     return dict_head
 
 
-# 1ère lettre
-dict_1 = decode_head(l)
-log(dict_1)
+# 1ere lettre
+dict_total = decode_head(l)
+log(dict_total)
 
 # purge des clés qui ne sont pas compatibles avec words
-dict_1_clean = {}
-for key, value in dict_1.items():
+
+dict_temp = dict_total
+
+dict_total = {}
+
+for key, value in dict_temp.items():
     for word in words:
-        if word[0] == key:
-            dict_1_clean[key] = value
+        if word.startswith(key):
+            dict_total[key] = value
+            break
 
-log(dict_1_clean)
+log(dict_total)
 
-print(len(dict_1_clean))
+
+# lettre suivante
+for cle, value in list(dict_total.items()):
+    if value:
+        del dict_total[cle]
+        dict_2 = decode_head(value)
+
+        for cle_2, value_2 in list(dict_2.items()):
+            dict_total[cle + cle_2] = value_2
+
+log(dict_total)
+
+# purge des clés qui ne sont pas compatibles avec words
+
+dict_temp = dict_total
+
+dict_total = {}
+
+for key, value in dict_temp.items():
+    for word in words:
+        if word.startswith(key):
+            dict_total[key] = value
+            break
+
+for _ in range(10):
+
+    # lettre suivante
+    for cle, value in list(dict_total.items()):
+        if value:
+            del dict_total[cle]
+            dict_2 = decode_head(value)
+
+            for cle_2, value_2 in list(dict_2.items()):
+                dict_total[cle + cle_2] = value_2
+
+    log(dict_total)
+
+    # purge des clés qui ne sont pas compatibles avec words
+
+    dict_temp = dict_total
+
+    dict_total = {}
+
+    for key, value in dict_temp.items():
+        for word in words:
+            if word.startswith(key):
+                dict_total[key] = value
+                break
+
+    log(dict_total)
+
+print(len(dict_total))
