@@ -222,7 +222,7 @@ log("l_=", l_)
 log("words =", words)
 log("codes =", codes)
 log("unique_codes =", unique_codes)
-log("code_couter =", code_counter)
+log("code_counter =", code_counter)
 log("code_max_length =", code_max_length)
 
 
