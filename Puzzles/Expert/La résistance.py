@@ -60,7 +60,7 @@ Sortie
 """
 
 """
-Tips pour RECURSIF ! 
+Tips pour récursif ! 
 string[position:].startswith(short_string)
 takes 10x more time then:
 
@@ -228,7 +228,7 @@ def log(*args, **kwargs):
 
 ########################################################################################################################################
 
-from collections import defaultdict, Counter  # noqa: E402
+from collections import defaultdict, Counter  # noqa: E402, F811
 
 
 MODE = "str"
@@ -241,14 +241,7 @@ morse = {
     ".-": "A",
     "-.": "N",
     "--": "M",
-    "...": "S", log("l_=", l_)
-    log("words =", words)
-    log("codes =", codes)
-    log("unique_codes =", unique_codes)
-    log("code_counter =", code_counter)
-    log("code_max_length =", code_max_length)
-    log("separator=", separator)
-    log("pad =", pad)
+    "...": "S",
     "..-": "U",
     ".-.": "R",
     ".--": "W",
@@ -486,7 +479,7 @@ if MODE == "int":
             # log("key_final=", key)
             # log("idx_final=", idx)
             result_path *= get_code_count[int(idx)]
-            # log(f"unque_code_{idx}=", unique_codes[int(idx)], "count=", result_path)
+            # log(f"unique_code_{idx}=", unique_codes[int(idx)], "count=", result_path)
         result += result_path
         # log(result)
 
