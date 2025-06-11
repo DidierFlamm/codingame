@@ -59,6 +59,55 @@ Sortie
 2
 """
 
+""" 
+TRIE data structure
+https://en.wikipedia.org/wiki/Trie
+"""
+
+""" 
+I used DP using a trie as data store.
+"""
+
+""" 
+At the end storing where each letter begins in the input string helped me for faster finding where each word from the dictionary begins. After that I used a recursion over the dictionary words and count how many words start at a given index of the input word and span to the end of the input string, that way I do not go through the how string every time.
+"""
+""" 
+TIPS 1
+Let’s say you’ve got a sequence of 1000 dots and dashes. One possible word ends at position 100, but other words are still possible on the same path (e.g. you’ve parsed out the word HELLO the words HELLO and HELLOWORLD are both in the dictionary). This is a fork; from position 100 you can start a new word (path B) or continue checking to see if HELLOWORLD is possible (path A).
+
+Paths A and B both end somewhere. Let’s say they both end at the same spot, position 150 (e.g. the word WORLD is also in the dictionary). This is what I mean by the path reconverging; paths A and B both lead to new path C at position 150. When you get done parsing path A, you parse path C until you hit an endpoint, then go back to parse path B. Path B ends at the beginning of path C. However, since you already parsed path C once, you don’t need to do it again.
+
+This kind of thing happens a lot in the larger tests, and the paths can split several times before recombining. You can waste a lot of compute cycles parsing out stuff you already did if you don’t take it into account.
+"""
+
+""" 
+TIPS 2
+Switching to a decent cache allowed me to use the simplest recursion and implied DFS, with the DP boosting performance to millisecond range
+
+"""
+
+''' 
+TIPS 3
+~34 ms in Python3 for the last test case. struggled a lot until i discovered identical sequences could be different words… simple recursion with memoization.
+'''
+
+""" 
+TIPS 4
+A few words on this one. I did a standard recursion with strings matching & memoization to avoid recursion on already-done paths.
+
+"""
+
+""" 
+I used tries, as others did.
+Some have mentioned that memoization was not necessary; but the way I did it, after the trie was built (based on all the words in the dictionary), I stepped through the message exactly once. For each bit in the message, I checked whether the current node in the trie had a branch for that bit. If it did, and if the next node had leaves in the trie, I multiplied the number of leaves by the previous leaves and spawned a new “thread” starting from the base of the trie on the next bit. Well, actually, for each bit, I totalled the number of leaves occurring from all the relevant nodes, and created one new search thread with that number. And if the node represented in that thread had a NULL pointer for that branch, I took the thread out of the list.
+When I reached the last bit, instead of starting a new thread with that total number of leaves, I simply printed it.
+I didn’t run out of time trying to spawn new threads each time I found trie leaves, but I ran out of space, no matter how I did it. So, keeping track of all the leaves at a certain node of the trie AND summing them all up for each bit before spawning a new thread were forms of memoization - I kept track of how many words ended on that bit, rather than checking each one.
+I used C! I had two structs, one for the nodes of the trie and one for the search threads.
+I used linked lists for both, to make it easy to insert and delete. There was no disadvantage to using a linked list for the search threads because I had to step through each one anyway for each bit in the message.
+That was fun!
+
+"""
+
 # code pour tester le script hors site
 entries = [
     "......-...-..---.-----.-..-..-..",
@@ -71,17 +120,20 @@ entries = [
 ]
 
 
-
+# test 4
 
 # test 5
-entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
+#entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
 
 # => 125
 
 # test 6
 
-#entries = ["..............................................", "2", "E", "I"]
+entries = ["..............................................", "2", "E", "I"]
 
+# test 6 custom
+
+entries = [".............................", "2", "E", "I"]
 # => 2971215073
 
 
@@ -139,11 +191,9 @@ inv_morse = {value: key for key, value in list(morse.items())}
 l_ = input()
 n = int(input())
 words = [input() for _ in range(n)]
-word_max_length = max([len(word) for word in words])
 
-log("l_=", l_)
-log("words =", words)
-log("word_max_length =", word_max_length)
+
+
 
 # compute tous les morse des mots du dictionnaire
 codes = []
@@ -162,17 +212,19 @@ for word in words:
 
 code_counter = Counter(codes)
 unique_codes = [key for key in list(code_counter.keys())]
-
-log(code_counter)
-log(unique_codes)
+get_code_variants = [value for value in list(code_counter.values())]
 
 # et leur longueur
-get_code_length = [len(code) for code in codes]
+get_code_length = [len(code) for code in unique_codes]
+code_max_length = max([len(code) for code in unique_codes])
 
-code_max_length = max([len(code) for code in codes])
-
-log("code_max_length =", code_max_length)
+log("l_=", l_)
+log("words =", words)
 log("codes =", codes)
+log("unique_codes =", unique_codes)
+log("code_couter =", code_counter)
+log("code_max_length =", code_max_length)
+
 
 morse_dict = {"": l_}
 memo = defaultdict(list)
@@ -184,32 +236,38 @@ go_on = True
 
 def compute_dict(morse_dict, memo, code_max_length):
     go_on = False
-    new_dict = {key: value for key, value in list(morse_dict.items()) if not value}
+    #récupère les chemins terminés
+    new_dict = {key: value for key, value in list(morse_dict.items()) if not value} 
+    #traite les chemins non terminés
     for key, value in list(morse_dict.items()):
+        
+        #branche terminée on passe à la clé suivante
+        if not value: continue
+        
+        #branche non terminée
         head = value[:code_max_length]
         
-        #si déjà connu
+        #si head déjà connue, on consulte memo
         if head in memo:
             for idx in memo[head]:
+                #log("get memo", idx)
                 remaining = value[get_code_length[idx] :]
                 new_dict[key + f"_{idx}"] = remaining
                 if len(remaining):
                     go_on = True
 
-        
+        #si head pas connue, on ajoute dans memo               
         else:
-            for idx, code in enumerate(codes):
+            for idx, code in enumerate(unique_codes):
                 if head.startswith(code):
             #        found = True
                     remaining = value[len(code) :]
                     new_dict[key + f"_{idx}"] = remaining
                     if len(remaining):
                         go_on = True
+                    #log("memo", idx)
                     memo[head].append(idx)
-                    #log(memo)
-        
-        #if not found:
-        #    mismatch.append(head)
+                    
     return new_dict, memo, go_on
 
 
@@ -217,13 +275,22 @@ while go_on:
     morse_dict, memo, go_on = compute_dict(
         morse_dict, memo, code_max_length
     )
+    #log(morse_dict)
 
-print(morse_dict)
 
-# dict_alpha_morse = finalize_dict(dict_alpha_morse)
 
-result = len(morse_dict)
+#compute result
+result = 0
+for path in list(morse_dict.keys()):
+    result_path = 1
+    for idx in path[1:].split("_"):
+        #log(get_code_variants[int(idx)])
+        result_path *= get_code_variants[int(idx)]
+    result += result_path
+    #log(result)
 
+
+log("duration =",time.perf_counter()-start_time)
 print(result)
 
-print(time.perf_counter()-start_time)
+
