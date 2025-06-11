@@ -109,6 +109,9 @@ That was fun!
 """
 
 # code pour tester le script hors site
+
+# test 3 : simples messages
+
 entries = [
     "......-...-..---.-----.-..-..-..",
     "5",
@@ -119,6 +122,10 @@ entries = [
     "TEST",
 ]
 
+output = 2
+
+
+# => 2
 
 # test 4
 
@@ -129,11 +136,11 @@ entries = [
 
 # test 6 : LC,LD
 
-entries = ["..............................................", "2", "E", "I"]
+# entries = ["..............................................", "2", "E", "I"]
 
 # test 6 custom
 
-entries = [".............................", "2", "E", "I"]
+# entries = [".............................", "2", "E", "I"]
 # => 2971215073
 
 
@@ -345,7 +352,7 @@ morse_dict = morse_dict_int
 
 while go_on:
     morse_dict, memo, go_on = compute_dict(morse_dict, memo, code_max_length)
-    # log(morse_dict)
+    log(morse_dict)
 
 
 # compute result
@@ -369,3 +376,7 @@ for key in list(morse_dict.keys()):
 log("duration =", time.perf_counter() - start_time)
 log("duration avec str = 6.4 sur test 6 custom")
 print(result)
+try:
+    log(result == output, "!")
+except NameError:
+    log("no output to compare")
