@@ -117,23 +117,35 @@ That was fun!
 
 """
 
+test = 2
+
 # code pour tester le script hors site
 
 # test 1 : 1 letter
 
-entries = [
-    "-.-",
-    "6",
-    "A",
-    "B",
-    "C",
-    "HELLO",
-    "K",
-    "WORLD",
-]
+entries = []
+output = 0
 
-output = 1
+if test == 1:
 
+    entries = [
+        "-.-",
+        "6",
+        "A",
+        "B",
+        "C",
+        "HELLO",
+        "K",
+        "WORLD",
+    ]
+
+    output = 1
+
+if test == 2:
+    entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
+    output = 125
+
+"""
 # test forum
 
 # entries = [".", "2", "E", "EEE"]
@@ -156,33 +168,34 @@ output = 1
 
 """
 # test 3 : simples messages
+if test == 3:
+    entries = [
+        "......-...-..---.-----.-..-..-..",
+        "5",
+        "HELL",
+        "HELLO",
+        "OWORLD",
+        "WORLD",
+        "TEST",
+    ]
 
-entries = [
-    "......-...-..---.-----.-..-..-..",
-    "5",
-    "HELL",
-    "HELLO",
-    "OWORLD",
-    "WORLD",
-    "TEST",
-]
+    output = 2
 
-output = 2
-"""
-
-# => 2
 
 # test 4
 
 # test 5
-# entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
+if test == 5:
+    entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
+    output = 125
 
-# => 125
 
 # test 6 : LC,LD
 
-# entries = ["..............................................", "2", "E", "I"]
-# output = 2971215073
+if test == 6:
+
+    entries = ["..............................................", "2", "E", "I"]
+    output = 2971215073
 """
 entries = [
     "-....--.-.-....--.-.",
@@ -195,9 +208,9 @@ entries = [
 output = 9
 """
 # test 6 custom
-
-# entries = [".............................", "2", "E", "I"]
-# output = 832040
+if test == 6.1:
+    entries = [".............................", "2", "E", "I"]
+    output = 832040
 
 generator = (entry for entry in entries)
 
@@ -231,7 +244,7 @@ def log(*args, **kwargs):
 from collections import defaultdict, Counter  # noqa: E402, F811
 
 
-MODE = "str"
+MODE = "int"
 
 
 morse = {
@@ -396,10 +409,8 @@ if MODE == "int":
     log("code_max_length =", code_max_length)
     log("separator=", separator)
     log("pad =", pad)
+    log("")
 
-    morse_dict_str = {
-        "": l_
-    }  # les codes des clés sont séparés par des _ : exemple : '_1_5_6_11_0'
     morse_dict_int = {
         0: l_
     }  # variante avec des clés int pour vérifier perf par rapport à str.
@@ -409,16 +420,16 @@ if MODE == "int":
     mismatch = []
     go_on = True
 
-    def compute_dict_int(morse_dict, memo, code_max_length):
+    def compute_dict_int(morse_dict_int, memo, code_max_length):
         global pad
         go_on = False
         # récupère les chemins terminés
         new_dict: dict[int, str] = {
-            key: value for key, value in list(morse_dict.items()) if not value
+            key: value for key, value in list(morse_dict_int.items()) if not value
         }
-        # log("\nmorse_dict=", morse_dict)
+
         # traite les chemins non terminés
-        for key, value in list(morse_dict.items()):
+        for key, value in list(morse_dict_int.items()):
             # log("key=", key, "value=", value)
             # branche terminée on passe à la clé suivante
             if not value:
@@ -429,53 +440,59 @@ if MODE == "int":
             # log("head=", head)
             # si head déjà connue, on consulte memo
             if head in memo:
-                """log(
-                    "head_inconnue=",
+                log(
+                    "head_connue=",
                     head,
                     "pad=",
                     pad,
                     "separator=",
                     separator,
-                )"""
+                )
                 for idx in memo[head]:
-                    # log("get memo", idx)n
-                    remaining = value[get_code_length[idx] :]
+                    log("idx in memo", idx)
 
+                    remaining = value[get_code_length[idx] :]
+                    log("code length=", get_code_length[idx])
+                    log("value=", value)
+                    log("remaining=", remaining)
                     new_dict[(key * pad + separator) * pad + idx] = remaining
                     if len(remaining):
                         go_on = True
 
             # si head pas connue, on ajoute dans memo
             else:
-                # log(
-                #    "head_inconnue=",
-                #    head,
-                # )
+                log(
+                    "head_inconnue=",
+                    head,
+                )
                 for idx, code in enumerate(unique_codes):
-                    # log("code=", code, "head=", head)
+                    log("code=", code, "head=", head)
                     if head.startswith(code):
                         remaining = value[len(code) :]
                         # log(f"new_key_{idx}=", (key * pad + separator) * pad + idx)
                         new_dict[(key * pad + separator) * pad + idx] = remaining
                         if len(remaining):
                             go_on = True
-                        # log("memo", idx)
+                        log("memo avant", memo)
                         memo[head].append(idx)
+                        log("memo après", memo)
 
         return new_dict, memo, go_on
 
-    while go_on:
-        morse_dict, memo, go_on = compute_dict_int(
+    k = 0
+    while go_on and k < 10:
+        morse_dict_int, memo, go_on = compute_dict_int(
             morse_dict_int, memo, code_max_length
         )
-        # log(morse_dict)
+        log(k, morse_dict_int)
+        k += 1
 
-    # compute result
+    log("\ncompute result")
     result = 0
     for key in list(morse_dict_int.keys()):
         result_path = 1
 
-        for idx in str(key).split(str(separator)):
+        for idx in str(key)[1:].split(str(separator)):
             # log("key_final=", key)
             # log("idx_final=", idx)
             result_path *= get_code_count[int(idx)]
@@ -485,3 +502,11 @@ if MODE == "int":
 
 
 print(result)  # type: ignore
+
+log("duration =", time.perf_counter() - start_time)
+
+
+try:
+    log(result == output, "!", f"expected {output}" * (not result == output))
+except NameError:
+    log("no 'result' and/or no 'output' variables to compare with")
