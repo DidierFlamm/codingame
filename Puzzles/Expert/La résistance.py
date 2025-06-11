@@ -117,7 +117,7 @@ That was fun!
 
 """
 
-test = 5
+test = 6
 
 # code pour tester le script hors site
 
@@ -216,19 +216,25 @@ def input():
 ########################################################################################################################################
 
 
-import sys  # noqa: E402
-from collections import defaultdict, Counter  # noqa: E402
-import time  # noqa: E402
+from sys import stderr  # noqa: E402
+from time import time  # noqa: E402
 from functools import lru_cache  # noqa: E402
+from collections import Counter  # noqa: E402
 
-start_time = time.perf_counter()
+start_time = time()
 
 DEBUG_MODE = 1
 
 
 def eprint(*args, **kwargs):
     if DEBUG_MODE:
-        print(*args, file=sys.stderr, flush=True, **kwargs)
+        try:
+            print(*args, file=stderr, flush=True, **kwargs)
+        except Exception as e:
+            print("[EPRINT ERROR] Failed to print debug message.", file=stderr)
+            print("Args:", args, file=stderr)
+            print("Kwargs:", kwargs, file=stderr)
+            print("Exception:", e, file=stderr)
 
 
 morse = {
@@ -266,7 +272,6 @@ inv_morse = {value: key for key, value in list(morse.items())}
 sequence = input()
 n = int(input())
 words = [input() for _ in range(n)]
-# word_max_length = max([len(word) for word in words])
 
 sequence_length = len(sequence)
 
@@ -318,14 +323,16 @@ def DP_recursive_decode(index: int) -> int:
 
     # end_of_sequence_leaf returns 1
     if index == sequence_length:
-        eprint(sequence, "ends at", index)
+        # eprint(sequence, "ends at", index)
         return 1
 
     # parent returns sum of children score
-    for morse in unique_morses:
+    for idx, morse in enumerate(unique_morses):
         if sequence.startswith(morse, index):
-            eprint(sequence, "starts with", morse)
-            score += DP_recursive_decode(index + len(morse))
+            # eprint(sequence, "starts with", morse)
+            score += get_morse_count_by_idx[idx] * DP_recursive_decode(
+                index + len(morse)
+            )
 
     return score
 
@@ -334,3 +341,4 @@ result = DP_recursive_decode(0)
 
 print(result)
 eprint(result == output)  # type: ignore
+eprint("duration=", time() - start_time)
