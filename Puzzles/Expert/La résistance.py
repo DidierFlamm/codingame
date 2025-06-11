@@ -123,12 +123,12 @@ test = 1
 
 # test 1 : 1 letter
 
-entries = []
+inputs = []
 output = 0
 # 1 lettre
 if test == 1:
 
-    entries = [
+    inputs = [
         "..-",
         "6",
         "A",
@@ -143,34 +143,34 @@ if test == 1:
     output = 1
 
 if test == 2:
-    entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
+    inputs = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
     output = 125
 
 """
 # test forum
 
-# entries = [".", "2", "E", "EEE"]
+# inputs = [".", "2", "E", "EEE"]
 
 # output = 1
 
 # test forum
 
-# entries = ["....----", "4", "E", "EE", "T", "TT"]
+# inputs = ["....----", "4", "E", "EE", "T", "TT"]
 # output = 25
 
 # test forum
 
-# entries = ["...----", "4", "E", "EE", "T", "TT"]
+# inputs = ["...----", "4", "E", "EE", "T", "TT"]
 # output = 15
 
-entries = ["--.-------..", "5", "GOD", "GOOD", "MORNING", "G", "HELLO"]
+inputs = ["--.-------..", "5", "GOD", "GOOD", "MORNING", "G", "HELLO"]
 
 output = 1
 
 """
 # test 3 : simples messages
 if test == 3:
-    entries = [
+    inputs = [
         "......-...-..---.-----.-..-..-..",
         "5",
         "HELL",
@@ -187,7 +187,7 @@ if test == 3:
 
 # test 5
 if test == 5:
-    entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
+    inputs = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
     output = 125
 
 
@@ -195,10 +195,10 @@ if test == 5:
 
 if test == 6:
 
-    entries = ["..............................................", "2", "E", "I"]
+    inputs = ["..............................................", "2", "E", "I"]
     output = 2971215073
 """
-entries = [
+inputs = [
     "-....--.-.-....--.-.",
     "3",
     "BAC",
@@ -210,10 +210,10 @@ output = 9
 """
 # test 6 custom
 if test == 6.1:
-    entries = [".............................", "2", "E", "I"]
+    inputs = [".............................", "2", "E", "I"]
     output = 832040
 
-generator = (entry for entry in entries)
+generator = (input for input in inputs)
 
 
 def input():
@@ -229,7 +229,7 @@ import time  # noqa: E402
 
 start_time = time.perf_counter()
 
-LOG_MODE = 0
+LOG_MODE = 1
 
 
 def log(*args, **kwargs):
@@ -238,3 +238,73 @@ def log(*args, **kwargs):
 
 
 ########################################################################################################################################
+
+
+morse = {
+    ".": "E",
+    "-": "T",
+    "..": "I",
+    ".-": "A",
+    "-.": "N",
+    "--": "M",
+    "...": "S",
+    "..-": "U",
+    ".-.": "R",
+    ".--": "W",
+    "-..": "D",
+    "-.-": "K",
+    "--.": "G",
+    "---": "O",
+    "....": "H",
+    "...-": "V",
+    "..-.": "F",
+    ".-..": "L",
+    ".--.": "P",
+    ".---": "J",
+    "-...": "B",
+    "-..-": "X",
+    "-.-.": "C",
+    "-.--": "Y",
+    "--..": "Z",
+    "--.-": "Q",
+}
+
+
+inv_morse = {value: key for key, value in list(morse.items())}
+
+sequence = input()
+n = int(input())
+words = [input() for _ in range(n)]
+# word_max_length = max([len(word) for word in words])
+
+
+# compute tous les code morse des mots du dictionnaire
+def get_morse(word):
+    morse = ""
+    for letter in word:
+        morse += inv_morse[letter]
+    return morse
+
+
+morses = []
+for word in words:
+    morses.append(get_morse(word))
+
+# compute les morse identiques
+
+morses_counter = Counter(morses)
+unique_morses = [key for key in list(morses_counter.keys())]
+get_morse_count_by_idx = [
+    value for value in list(morses_counter.values())
+]  # list faster than dict to map morse -> count by idx
+
+# et leur longueur
+get_morse_length_by_idx = [len(morse) for morse in unique_morses]
+
+morse_max_length = max(get_morse_length_by_idx)
+
+log("sequence=", sequence)
+log("words=", words)
+log("morses=", morses)
+log("counter=", morses_counter)
+log("max length=", morse_max_length)
