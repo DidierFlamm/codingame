@@ -1,6 +1,7 @@
 """ 
 https://www.codingame.com/training/hard/roller-coaster
 
+File
 Programmation dynamique
 Simulation
 
