@@ -59,6 +59,15 @@ Sortie
 2
 """
 
+"""
+Tips pour RECURSIF ! 
+string[position:].startswith(short_string)
+takes 10x more time then:
+
+string.startswith(short_string, position)
+
+"""
+
 """ 
 TRIE data structure
 https://en.wikipedia.org/wiki/Trie
@@ -110,6 +119,39 @@ That was fun!
 
 # code pour tester le script hors site
 
+# test 1 : 1 letter
+
+entries = [
+    "-....",
+    "6",
+    "A",
+    "B",
+    "C",
+    "HELLO",
+    "K",
+    "Z",
+    "WORLD",
+]
+
+output = 1
+
+# test forum
+
+entries = [".", "2", "E", "EEE"]
+
+output = 1
+
+# test forum
+
+entries = ["....----", "4", "E", "EE", "T", "TT"]
+output = 25
+
+# test forum
+
+entries = ["...----", "4", "E", "EE", "T", "TT"]
+output = 15
+
+"""
 # test 3 : simples messages
 
 entries = [
@@ -123,7 +165,7 @@ entries = [
 ]
 
 output = 2
-
+"""
 
 # => 2
 
@@ -137,12 +179,22 @@ output = 2
 # test 6 : LC,LD
 
 # entries = ["..............................................", "2", "E", "I"]
+# output = 2971215073
+
+entries = [
+    "-....--.-.-....--.-.",
+    "3",
+    "BAC",
+    "BANN",
+    "DUTETE",
+]
+
+output = 9
 
 # test 6 custom
 
 # entries = [".............................", "2", "E", "I"]
-# => 2971215073
-
+# output = 832040
 
 generator = (entry for entry in entries)
 
@@ -151,7 +203,7 @@ def input():
     return next(generator)
 
 
-######################################
+########################################################################################################################################
 
 
 import sys  # noqa: E402
@@ -160,9 +212,12 @@ import time  # noqa: E402
 
 start_time = time.perf_counter()
 
+LOG_MODE = 1
+
 
 def log(*args, **kwargs):
-    print(*args, **kwargs, file=sys.stderr, flush=True)
+    if LOG_MODE:
+        print(*args, **kwargs, file=sys.stderr, flush=True)
 
 
 morse = {
@@ -224,7 +279,7 @@ get_code_count = [value for value in list(code_counter.values())]
 
 # et leur longueur
 get_code_length = [len(code) for code in unique_codes]
-code_max_length = len(str(max(unique_codes)))  # sert à déterminer la taille du head
+code_max_length = max(get_code_length)  # sert à déterminer la taille du head
 
 nb_unique_codes_length = len(str(nb_unique_codes))
 
@@ -301,31 +356,30 @@ def compute_dict_int(morse_dict, memo, code_max_length):
     new_dict: dict[int, str] = {
         key: value for key, value in list(morse_dict.items()) if not value
     }
+    # log("\nmorse_dict=", morse_dict)
     # traite les chemins non terminés
     for key, value in list(morse_dict.items()):
-
+        # log("key=", key, "value=", value)
         # branche terminée on passe à la clé suivante
         if not value:
             continue
 
         # branche non terminée
         head = value[:code_max_length]
-
+        # log("head=", head)
         # si head déjà connue, on consulte memo
         if head in memo:
+            """log(
+                "head_inconnue=",
+                head,
+                "pad=",
+                pad,
+                "separator=",
+                separator,
+            )"""
             for idx in memo[head]:
                 # log("get memo", idx)n
                 remaining = value[get_code_length[idx] :]
-                """log(
-                    "head_connue=",
-                    key,
-                    "pad=",
-                    pad,
-                    "idx=",
-                    idx,
-                    "separator=",
-                    separator,
-                )"""
 
                 new_dict[(key * pad + separator) * pad + idx] = remaining
                 if len(remaining):
@@ -333,11 +387,15 @@ def compute_dict_int(morse_dict, memo, code_max_length):
 
         # si head pas connue, on ajoute dans memo
         else:
+            # log(
+            #    "head_inconnue=",
+            #    head,
+            # )
             for idx, code in enumerate(unique_codes):
+                # log("code=", code, "head=", head)
                 if head.startswith(code):
-                    #        found = True
                     remaining = value[len(code) :]
-                    # log("head_inconnue=", key, "pad=", pad, "idx=", idx)
+                    # log(f"new_key_{idx}=", (key * pad + separator) * pad + idx)
                     new_dict[(key * pad + separator) * pad + idx] = remaining
                     if len(remaining):
                         go_on = True
@@ -352,7 +410,7 @@ morse_dict = morse_dict_int
 
 while go_on:
     morse_dict, memo, go_on = compute_dict(morse_dict, memo, code_max_length)
-    log(morse_dict)
+    # log(morse_dict)
 
 
 # compute result
@@ -369,6 +427,7 @@ for key in list(morse_dict.keys()):
             # log("key_final=", key)
             # log("idx_final=", idx)
             result_path *= get_code_count[int(idx)]
+            # log(f"unque_code_{idx}=", unique_codes[int(idx)], "count=", result_path)
     result += result_path
     # log(result)
 
@@ -377,6 +436,6 @@ log("duration =", time.perf_counter() - start_time)
 log("duration avec str = 6.4 sur test 6 custom")
 print(result)
 try:
-    log(result == output, "!")
+    log(result == output, "!", f"expected {output}" * (not result == output))
 except NameError:
-    log("no output to compare")
+    log("no 'result' and/or no 'output' variables to compare with")
