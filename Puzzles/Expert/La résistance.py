@@ -117,16 +117,12 @@ That was fun!
 
 """
 
-test = 1
+test = 5
 
 # code pour tester le script hors site
 
-# test 1 : 1 letter
 
-inputs = []
-output = 0
-# 1 lettre
-if test == 1:
+if test == 1:  # 1 lettre
 
     inputs = [
         "..-",
@@ -142,9 +138,6 @@ if test == 1:
 
     output = 1
 
-if test == 2:
-    inputs = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
-    output = 125
 
 """
 # test forum
@@ -162,14 +155,14 @@ if test == 2:
 
 # inputs = ["...----", "4", "E", "EE", "T", "TT"]
 # output = 15
-
-inputs = ["--.-------..", "5", "GOD", "GOOD", "MORNING", "G", "HELLO"]
-
-output = 1
-
 """
-# test 3 : simples messages
-if test == 3:
+
+if test == 2:  # Détection correcte d'un mot
+    inputs = ["--.-------..", "5", "GOD", "GOOD", "MORNING", "G", "HELLO"]
+    output = 1
+
+
+if test == 3:  # simples messages
     inputs = [
         "......-...-..---.-----.-..-..-..",
         "5",
@@ -213,7 +206,7 @@ if test == 6.1:
     inputs = [".............................", "2", "E", "I"]
     output = 832040
 
-generator = (input for input in inputs)
+generator = (input for input in inputs)  # type: ignore
 
 
 def input():
@@ -226,19 +219,16 @@ def input():
 import sys  # noqa: E402
 from collections import defaultdict, Counter  # noqa: E402
 import time  # noqa: E402
-from functools import lru_cache
+from functools import lru_cache  # noqa: E402
 
 start_time = time.perf_counter()
 
-LOG_MODE = 1
+DEBUG_MODE = 1
 
 
-def log(*args, **kwargs):
-    if LOG_MODE:
-        print(*args, **kwargs, file=sys.stderr, flush=True)
-
-
-########################################################################################################################################
+def eprint(*args, **kwargs):
+    if DEBUG_MODE:
+        print(*args, file=sys.stderr, flush=True, **kwargs)
 
 
 morse = {
@@ -278,6 +268,8 @@ n = int(input())
 words = [input() for _ in range(n)]
 # word_max_length = max([len(word) for word in words])
 
+sequence_length = len(sequence)
+
 
 # compute tous les code morse des mots du dictionnaire
 def get_morse(word):
@@ -304,27 +296,41 @@ get_morse_length_by_idx = [len(morse) for morse in unique_morses]
 
 morse_max_length = max(get_morse_length_by_idx)
 
-log("sequence=", sequence)
-log("words=", words)
-log("morses=", morses)
-log("counter=", morses_counter)
-
-n_messages = 0
+eprint("sequence=", sequence)
+eprint("length=", sequence_length)
+eprint("words=", words)
+eprint("morses=", morses)
+eprint("counter=", morses_counter)
+eprint("max_length=", morse_max_length)
 
 
 @lru_cache(maxsize=None)
-def DP_decode(index: int, n_messages: int) -> int:
+def DP_recursive_decode(index: int) -> int:
     """
     recursively find the number of different messages you can decode from the beginning of the sequence
     returns sequence, and for all nodes : index after decode, score
 
     Args:
         index (int): position in the sequence to start decoding
-        n_messages (int): 1 per leaf if index = end of the sequence
+        score (int): 1 per end_of_sequence_leaf (ie 1 unique message)
     """
+    score = 0
 
+    # end_of_sequence_leaf returns 1
+    if index == sequence_length:
+        eprint(sequence, "ends at", index)
+        return 1
+
+    # parent returns sum of children score
     for morse in unique_morses:
         if sequence.startswith(morse, index):
-            n_messages += recursive_decode(index + len(morse))
+            eprint(sequence, "starts with", morse)
+            score += DP_recursive_decode(index + len(morse))
 
-    return n_messages
+    return score
+
+
+result = DP_recursive_decode(0)
+
+print(result)
+eprint(result == output)  # type: ignore
