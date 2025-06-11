@@ -86,10 +86,10 @@ Switching to a decent cache allowed me to use the simplest recursion and implied
 
 """
 
-''' 
+""" 
 TIPS 3
 ~34 ms in Python3 for the last test case. struggled a lot until i discovered identical sequences could be different words… simple recursion with memoization.
-'''
+"""
 
 """ 
 TIPS 4
@@ -123,11 +123,11 @@ entries = [
 # test 4
 
 # test 5
-#entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
+# entries = ["-.-..---.-..---.-..--", "5", "CAT", "KIM", "TEXT", "TREM", "CEM"]
 
 # => 125
 
-# test 6
+# test 6 : LC,LD
 
 entries = ["..............................................", "2", "E", "I"]
 
@@ -149,9 +149,10 @@ def input():
 
 import sys  # noqa: E402
 from collections import defaultdict, Counter  # noqa: E402
-import time
+import time  # noqa: E402
 
 start_time = time.perf_counter()
+
 
 def log(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr, flush=True)
@@ -193,10 +194,9 @@ n = int(input())
 words = [input() for _ in range(n)]
 
 
-
-
 # compute tous les morse des mots du dictionnaire
 codes = []
+
 
 def encode(word):
     code = ""
@@ -212,11 +212,21 @@ for word in words:
 
 code_counter = Counter(codes)
 unique_codes = [key for key in list(code_counter.keys())]
-get_code_variants = [value for value in list(code_counter.values())]
+nb_unique_codes = len(unique_codes)
+get_code_count = [value for value in list(code_counter.values())]
 
 # et leur longueur
 get_code_length = [len(code) for code in unique_codes]
-code_max_length = max([len(code) for code in unique_codes])
+code_max_length = len(str(max(unique_codes)))  # sert à déterminer la taille du head
+
+# nb_unique_codes_length = len(
+#    str(nb_unique_codes + 1)
+# )  # +1 car les indices seront stockés +1 donc on peut passer à une longueur supérieure dans les cas rares type 99 -> 100
+
+# pad = 10 ** (
+#    code_max_length + 1
+# )  # on décale la clé de code_max_length + encore 0 pour séparer key de head lors de la concaténation par int
+
 
 log("l_=", l_)
 log("words =", words)
@@ -224,73 +234,132 @@ log("codes =", codes)
 log("unique_codes =", unique_codes)
 log("code_counter =", code_counter)
 log("code_max_length =", code_max_length)
+# log("pad =", pad)
 
 
-morse_dict = {"": l_}
+morse_dict_str = {
+    "": l_
+}  # les codes des clés sont séparés par des _ : exemple : '_1_5_6_11_0'
+# morse_dict_int = {
+#    0: l_
+# }  # variante avec des clés int pour vérifier perf par rapport à str.
+# les codes sont séparés par des 0 : exemple : 10506011
+# problème je ne peux pas utiliser 0 comme indice de code => décalage de 1 : 0-> 1 , etc...
 memo = defaultdict(list)
 mismatch = []
 go_on = True
 
 
-
-
-def compute_dict(morse_dict, memo, code_max_length):
+def compute_dict_str(morse_dict, memo, code_max_length):
     go_on = False
-    #récupère les chemins terminés
-    new_dict = {key: value for key, value in list(morse_dict.items()) if not value} 
-    #traite les chemins non terminés
+    # récupère les chemins terminés
+    new_dict = {key: value for key, value in list(morse_dict.items()) if not value}
+    # traite les chemins non terminés
     for key, value in list(morse_dict.items()):
-        
-        #branche terminée on passe à la clé suivante
-        if not value: continue
-        
-        #branche non terminée
+
+        # branche terminée on passe à la clé suivante
+        if not value:
+            continue
+
+        # branche non terminée
         head = value[:code_max_length]
-        
-        #si head déjà connue, on consulte memo
+
+        # si head déjà connue, on consulte memo
         if head in memo:
             for idx in memo[head]:
-                #log("get memo", idx)
+                # log("get memo", idx)
                 remaining = value[get_code_length[idx] :]
                 new_dict[key + f"_{idx}"] = remaining
                 if len(remaining):
                     go_on = True
 
-        #si head pas connue, on ajoute dans memo               
+        # si head pas connue, on ajoute dans memo
         else:
             for idx, code in enumerate(unique_codes):
                 if head.startswith(code):
-            #        found = True
+                    #        found = True
                     remaining = value[len(code) :]
                     new_dict[key + f"_{idx}"] = remaining
                     if len(remaining):
                         go_on = True
-                    #log("memo", idx)
+                    # log("memo", idx)
                     memo[head].append(idx)
-                    
+
     return new_dict, memo, go_on
 
 
+"""
+def compute_dict_int(morse_dict, memo, code_max_length):
+    go_on = False
+    # récupère les chemins terminés
+    new_dict: dict[int, str] = {
+        key: value for key, value in list(morse_dict.items()) if not value
+    }
+    # traite les chemins non terminés
+    for key, value in list(morse_dict.items()):
+
+        # branche terminée on passe à la clé suivante
+        if not value:
+            continue
+
+        # branche non terminée
+        head = value[:code_max_length]
+
+        # si head déjà connue, on consulte memo
+        if head in memo:
+            for idx in memo[head]:
+                # log("get memo", idx)
+                remaining = value[get_code_length[idx] :]
+                # on décale key de pad  et on rajoute idx + 1
+                new_dict[key * pad + idx + 1] = remaining
+                if len(remaining):
+                    go_on = True
+
+        # si head pas connue, on ajoute dans memo
+        else:
+            for idx, code in enumerate(unique_codes):
+                if head.startswith(code):
+                    #        found = True
+                    remaining = value[len(code) :]
+                    log("key=", key, "pad=", pad, "idx=", idx)
+                    pad = 1 + len(str(idx + 1))
+                    new_dict[key * pad + idx + 1] = remaining
+                    if len(remaining):
+                        go_on = True
+                    # log("memo", idx)
+                    memo[head].append(idx)
+
+    return new_dict, memo, go_on
+"""
+
+compute_dict = compute_dict_str  # _int ou _str
+morse_dict = morse_dict_str
+
 while go_on:
-    morse_dict, memo, go_on = compute_dict(
-        morse_dict, memo, code_max_length
-    )
-    #log(morse_dict)
+    morse_dict, memo, go_on = compute_dict(morse_dict, memo, code_max_length)
+    # log(morse_dict)
 
 
-
-#compute result
+# compute result
 result = 0
-for path in list(morse_dict.keys()):
+for key in list(morse_dict.keys()):
     result_path = 1
-    for idx in path[1:].split("_"):
-        #log(get_code_variants[int(idx)])
-        result_path *= get_code_variants[int(idx)]
+
+    # if compute_dict == compute_dict_str:
+    for idx in key[1:].split("_"):  # type: ignore #squeeze le _ initial
+        # log(get_code_count[int(idx)])
+        result_path *= get_code_count[int(idx)]
+    # elif compute_dict == compute_dict_int:
+    #    for idx in str(key).split("0"):
+    #        # log(get_code_count[int(idx)])
+    #        log("idx=", idx)
+    #        result_path *= get_code_count[
+    #            int(idx) - 1
+    #        ]  # -1 pour compenser le décalage de 1
     result += result_path
-    #log(result)
+    # log(result)
 
 
-log("duration =",time.perf_counter()-start_time)
+log("duration =", time.perf_counter() - start_time)
+# log("duration avec str = 6.4 sur test 6 custom")
 print(result)
-
-
