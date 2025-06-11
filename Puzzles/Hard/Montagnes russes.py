@@ -1,4 +1,4 @@
-""" 
+"""
 https://www.codingame.com/training/hard/roller-coaster
 
 File
@@ -7,7 +7,7 @@ Simulation
 
 Objectif
 Vous venez d'être affecté au centre d'analyse et de supervision d'un nouveau parc d'attraction. Votre mission est d'estimer chaque jour quelle vont être les recettes de la journée pour chaque manège. Vous commencez par vous intéresser aux montagnes russes.
- 	Règles
+        Règles
 Vous remarquez que les montagnes russes plaisent tellement aux gens que dès qu'ils ont fini un tour de manège, ils ne peuvent s’empêcher de revenir pour un nouveau tour.
 Les personnes viennent faire la queue devant l'attraction.
 Elles peuvent soit être seules, soit être en groupe. Lorsque des groupes sont dans la queue, ils veulent forcément monter ensemble à bord, sans être séparés.
@@ -20,9 +20,9 @@ La file d'attente contient un nombre N de groupes.
 Chaque groupe comporte un nombre Pi de personnes.
 Chaque personne dépense 1 dirham par tour de manège.
 
- 	Exemples
+        Exemples
 Avec L=3, C=3 et 4 groupes (N=4) de tailles [3,1,1,2]:
- 
+
 Tour 1 : pour le premier tour de manège, seul le premier groupe peut monter et prend toutes les places. À la fin du tour, ce groupe retourne en fin de queue qui ressemble maintenant à [1,1,2,3].
 Gain du tour : 3 dirhams.
 
@@ -34,7 +34,7 @@ Gain du tour : 2 dirhams.
 
 Gain total : 3+2+2 = 7 dirhams
 
- 	Entrées du jeu
+        Entrées du jeu
 Entrée
 Ligne 1 : Les entiers L, C et N séparés par un espace.
 
@@ -79,7 +79,7 @@ Sortie
 """
 
 # code pour tester le script hors site
-entries = [
+inputs = [
     "5 3 4",
     "2",
     "3",
@@ -87,7 +87,9 @@ entries = [
     "4",
 ]
 
-generator = (entry for entry in entries)
+output = 14
+
+generator = (input for input in inputs)
 
 
 def input():
@@ -99,25 +101,36 @@ def input():
 from functools import lru_cache
 
 l, c, n = [int(i) for i in input().split()]
-queue = [int(input()) for _ in range(n)]    #liste des groupes (valeur = nb de personnes dans le groupe)
+queue = [
+    int(input()) for _ in range(n)
+]  # liste des groupes (valeur = nb de personnes dans le groupe)
 
-@lru_cache(maxsize=None)  #dynamic programming with memoizing
-def tour_type(index) -> tuple[int, int] : #pour un index de départ, calcule la recette et l'index à la fin du tour pour un tour 
+
+@lru_cache(maxsize=None)  # dynamic programming with memoizing
+def tour_type(
+    index,
+) -> tuple[
+    int, int
+]:  # pour un index de départ, calcule la recette et l'index à la fin du tour pour un tour
     recette = 0
-    for _ in range(n) :          # boucle sur chaque groupe
-            recette += queue[index]    #1 dirham par personne * nb de personnes
-            if index == n-1:    #si on est arrivée au bout de la queue, on revient au début
-                index=0
-            else:
-                index += 1      #sinon on passe au groupe suivant
-            if recette + queue[index] > l: break #on arrête si le groupe suivant ne peut pas monter
+    for _ in range(n):  # boucle sur chaque groupe
+        recette += queue[index]  # 1 dirham par personne * nb de personnes
+        if index == n - 1:  # si on est arrivée au bout de la queue, on revient au début
+            index = 0
+        else:
+            index += 1  # sinon on passe au groupe suivant
+        if recette + queue[index] > l:
+            break  # on arrête si le groupe suivant ne peut pas monter
     return recette, index
+
 
 recettes = 0
 index = 0
 
-for tour in range(c): #boucle sur les c tours
-    recette, index = tour_type(index) #on calcule (ou récupère si déjà calculé !) la recette et la position du groupe à la fin du tour
-    recettes+=recette
-    
+for tour in range(c):  # boucle sur les c tours
+    recette, index = tour_type(
+        index
+    )  # on calcule (ou récupère si déjà calculé !) la recette et la position du groupe à la fin du tour
+    recettes += recette
+
 print(recettes)
