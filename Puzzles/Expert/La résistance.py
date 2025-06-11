@@ -219,13 +219,11 @@ get_code_count = [value for value in list(code_counter.values())]
 get_code_length = [len(code) for code in unique_codes]
 code_max_length = len(str(max(unique_codes)))  # sert à déterminer la taille du head
 
-# nb_unique_codes_length = len(
-#    str(nb_unique_codes + 1)
-# )  # +1 car les indices seront stockés +1 donc on peut passer à une longueur supérieure dans les cas rares type 99 -> 100
+nb_unique_codes_length = len(str(nb_unique_codes))
 
-# pad = 10 ** (
-#    code_max_length + 1
-# )  # on décale la clé de code_max_length + encore 0 pour séparer key de head lors de la concaténation par int
+separator = nb_unique_codes  # nb correspond à l'indice max +1
+
+pad = 10 * len(str(separator))
 
 
 log("l_=", l_)
@@ -234,15 +232,16 @@ log("codes =", codes)
 log("unique_codes =", unique_codes)
 log("code_counter =", code_counter)
 log("code_max_length =", code_max_length)
-# log("pad =", pad)
+log("separator=", separator)
+log("pad =", pad)
 
 
 morse_dict_str = {
     "": l_
 }  # les codes des clés sont séparés par des _ : exemple : '_1_5_6_11_0'
-# morse_dict_int = {
-#    0: l_
-# }  # variante avec des clés int pour vérifier perf par rapport à str.
+morse_dict_int = {
+    0: l_
+}  # variante avec des clés int pour vérifier perf par rapport à str.
 # les codes sont séparés par des 0 : exemple : 10506011
 # problème je ne peux pas utiliser 0 comme indice de code => décalage de 1 : 0-> 1 , etc...
 memo = defaultdict(list)
@@ -288,8 +287,8 @@ def compute_dict_str(morse_dict, memo, code_max_length):
     return new_dict, memo, go_on
 
 
-"""
 def compute_dict_int(morse_dict, memo, code_max_length):
+    global pad
     go_on = False
     # récupère les chemins terminés
     new_dict: dict[int, str] = {
@@ -308,10 +307,20 @@ def compute_dict_int(morse_dict, memo, code_max_length):
         # si head déjà connue, on consulte memo
         if head in memo:
             for idx in memo[head]:
-                # log("get memo", idx)
+                # log("get memo", idx)n
                 remaining = value[get_code_length[idx] :]
-                # on décale key de pad  et on rajoute idx + 1
-                new_dict[key * pad + idx + 1] = remaining
+                """log(
+                    "head_connue=",
+                    key,
+                    "pad=",
+                    pad,
+                    "idx=",
+                    idx,
+                    "separator=",
+                    separator,
+                )"""
+
+                new_dict[(key * pad + separator) * pad + idx] = remaining
                 if len(remaining):
                     go_on = True
 
@@ -321,19 +330,18 @@ def compute_dict_int(morse_dict, memo, code_max_length):
                 if head.startswith(code):
                     #        found = True
                     remaining = value[len(code) :]
-                    log("key=", key, "pad=", pad, "idx=", idx)
-                    pad = 1 + len(str(idx + 1))
-                    new_dict[key * pad + idx + 1] = remaining
+                    # log("head_inconnue=", key, "pad=", pad, "idx=", idx)
+                    new_dict[(key * pad + separator) * pad + idx] = remaining
                     if len(remaining):
                         go_on = True
                     # log("memo", idx)
                     memo[head].append(idx)
 
     return new_dict, memo, go_on
-"""
 
-compute_dict = compute_dict_str  # _int ou _str
-morse_dict = morse_dict_str
+
+compute_dict = compute_dict_int  # _int ou _str
+morse_dict = morse_dict_int
 
 while go_on:
     morse_dict, memo, go_on = compute_dict(morse_dict, memo, code_max_length)
@@ -345,21 +353,19 @@ result = 0
 for key in list(morse_dict.keys()):
     result_path = 1
 
-    # if compute_dict == compute_dict_str:
-    for idx in key[1:].split("_"):  # type: ignore #squeeze le _ initial
-        # log(get_code_count[int(idx)])
-        result_path *= get_code_count[int(idx)]
-    # elif compute_dict == compute_dict_int:
-    #    for idx in str(key).split("0"):
-    #        # log(get_code_count[int(idx)])
-    #        log("idx=", idx)
-    #        result_path *= get_code_count[
-    #            int(idx) - 1
-    #        ]  # -1 pour compenser le décalage de 1
+    if compute_dict == compute_dict_str:
+        for idx in key[1:].split("_"):  # type: ignore #squeeze le _ initial
+            # log(get_code_count[int(idx)])
+            result_path *= get_code_count[int(idx)]
+    elif compute_dict == compute_dict_int:
+        for idx in str(key)[1:].split(str(separator)):
+            # log("key_final=", key)
+            # log("idx_final=", idx)
+            result_path *= get_code_count[int(idx)]
     result += result_path
     # log(result)
 
 
 log("duration =", time.perf_counter() - start_time)
-# log("duration avec str = 6.4 sur test 6 custom")
+log("duration avec str = 6.4 sur test 6 custom")
 print(result)
