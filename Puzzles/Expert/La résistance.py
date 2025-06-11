@@ -117,7 +117,7 @@ That was fun!
 
 """
 
-test = 2
+test = 1
 
 # code pour tester le script hors site
 
@@ -125,17 +125,18 @@ test = 2
 
 entries = []
 output = 0
-
+# 1 lettre
 if test == 1:
 
     entries = [
-        "-.-",
+        "..-",
         "6",
         "A",
         "B",
         "C",
         "HELLO",
         "K",
+        "U",
         "WORLD",
     ]
 
@@ -229,9 +230,9 @@ import time  # noqa: E402
 start_time = time.perf_counter()
 
 
-MODE = "str"
+MODE = "int"
 
-LOG_MODE = 1
+LOG_MODE = 0
 
 
 def log(*args, **kwargs):
@@ -242,9 +243,6 @@ def log(*args, **kwargs):
 ########################################################################################################################################
 
 from collections import defaultdict, Counter  # noqa: E402, F811
-
-
-MODE = "int"
 
 
 morse = {
@@ -479,13 +477,10 @@ if MODE == "int":
 
         return new_dict, memo, go_on
 
-    k = 0
-    while go_on and k < 10:
+    while go_on:
         morse_dict_int, memo, go_on = compute_dict_int(
             morse_dict_int, memo, code_max_length
         )
-        log(k, morse_dict_int)
-        k += 1
 
     log("\ncompute result")
     result = 0
@@ -503,7 +498,9 @@ if MODE == "int":
 
 print(result)  # type: ignore
 
-log("duration =", time.perf_counter() - start_time)
+print(
+    "duration =", time.perf_counter() - start_time, "with MODE", MODE, file=sys.stderr
+)
 
 
 try:
