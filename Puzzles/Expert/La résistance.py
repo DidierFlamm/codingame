@@ -226,6 +226,7 @@ def input():
 import sys  # noqa: E402
 from collections import defaultdict, Counter  # noqa: E402
 import time  # noqa: E402
+from functools import lru_cache
 
 start_time = time.perf_counter()
 
@@ -307,4 +308,23 @@ log("sequence=", sequence)
 log("words=", words)
 log("morses=", morses)
 log("counter=", morses_counter)
-log("max length=", morse_max_length)
+
+n_messages = 0
+
+
+@lru_cache(maxsize=None)
+def DP_decode(index: int, n_messages: int) -> int:
+    """
+    recursively find the number of different messages you can decode from the beginning of the sequence
+    returns sequence, and for all nodes : index after decode, score
+
+    Args:
+        index (int): position in the sequence to start decoding
+        n_messages (int): 1 per leaf if index = end of the sequence
+    """
+
+    for morse in unique_morses:
+        if sequence.startswith(morse, index):
+            n_messages += recursive_decode(index + len(morse))
+
+    return n_messages
