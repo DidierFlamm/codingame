@@ -77,9 +77,13 @@ inputs = [
     "TEST",
 ]
 
+# example test
+
 output = 2
 
 inputs = ["..............................................", "2", "E", "I"]
+
+# last CG test
 
 output = 2971215073
 
@@ -89,6 +93,12 @@ generator = (input for input in inputs)  # type: ignore
 def input():
     return next(generator)
 
+
+######################################################################
+# do not copy paste code above this line in CG IDE                   #
+#######################################################################################################################################
+# copy paste this cell in CG IDE if you want to evaluate performance #
+######################################################################
 
 from sys import stderr  # noqa: E402
 from time import time  # noqa: E402
@@ -112,175 +122,167 @@ from statistics import mean, stdev  # noqa: E402
 start_time = perf_counter()
 
 ########################################################################################################################################
-
-
+# copy paste this cell in CG IDE #
+##################################
 from functools import lru_cache  # noqa: E402
 from collections import Counter  # noqa: E402
 
-
-morse_dict = {
-    ".": "E",
-    "-": "T",
-    "..": "I",
-    ".-": "A",
-    "-.": "N",
-    "--": "M",
-    "...": "S",
-    "..-": "U",
-    ".-.": "R",
-    ".--": "W",
-    "-..": "D",
-    "-.-": "K",
-    "--.": "G",
-    "---": "O",
-    "....": "H",
-    "...-": "V",
-    "..-.": "F",
-    ".-..": "L",
-    ".--.": "P",
-    ".---": "J",
-    "-...": "B",
-    "-..-": "X",
-    "-.-.": "C",
-    "-.--": "Y",
-    "--..": "Z",
-    "--.-": "Q",
-}
-
-inv_morse_dict = {value: key for key, value in list(morse_dict.items())}
-
-# inputs
 sequence = input()
 n = int(input())
 words = [input() for _ in range(n)]
 
+morse_dict = {
+    "A": ".-",
+    "B": "-...",
+    "C": "-.-.",
+    "D": "-..",
+    "E": ".",
+    "F": "..-.",
+    "G": "--.",
+    "H": "....",
+    "I": "..",
+    "J": ".---",
+    "K": "-.-",
+    "L": ".-..",
+    "M": "--",
+    "N": "-.",
+    "O": "---",
+    "P": ".--.",
+    "Q": "--.-",
+    "R": ".-.",
+    "S": "...",
+    "T": "-",
+    "U": "..-",
+    "V": "...-",
+    "W": ".--",
+    "X": "-..-",
+    "Y": "-.--",
+    "Z": "--..",
+}
 
-# function computing tuple of morse codes of each word from an iterable
-def get_morse_codes(words):
 
-    # sub-function computing morse code from word
-    def get_morse_from_word(word):
-        morse_code = ""
-        for letter in word:
-            morse_code += inv_morse_dict[letter]
-        return morse_code
+def encrypt(word):
+    cipher = ""
+    for letter in word:
+        cipher += morse_dict[letter]
+    return cipher
 
-    morse_codes = []
+
+def encrypt_iterable(words):
+    ciphers = []
     for word in words:
-        morse_codes.append(get_morse_from_word(word))
-
-    morse_codes = tuple(
-        morse_codes
-    )  # memoization needs hashable variables (ie immutable)
-    return morse_codes
+        ciphers.append(encrypt(word))
+    # returns tuple because memoization needs immutable variables for hashing
+    return tuple(ciphers)
 
 
-# function computing unique morse codes from an iterable, their count and length
-
-
-def get_unique_morse_codes_and_counts(morse_codes):
-    morses_counter = Counter(morse_codes)
-    unique_morse_codes = tuple(key for key in list(morses_counter.keys()))
-    unique_morse_code_counts = tuple(
-        value for value in list(morses_counter.values())
-    )  # counts are necessary because different words may have same morse codes
-    # unique_morse_codes_length = tuple(len(morse) for morse in unique_morse_codes)
-    return unique_morse_codes, unique_morse_code_counts  # , unique_morse_codes_length
-
-
-# recursive function to compute number of different messages from a sequence
-# using Dynamic Programming and Memoization
+def get_unique_ciphers_and_counts(ciphers):
+    cipher_counter = Counter(ciphers)
+    unique_ciphers = tuple(key for key in list(cipher_counter.keys()))
+    unique_cipher_counts = tuple(
+        value for value in list(cipher_counter.values())
+    )  # ciphers are counted because different words may have the same cipher
+    return unique_ciphers, unique_cipher_counts
 
 
 @lru_cache(maxsize=None)
-def DP_recursive_decode(
-    # sequence: str,
-    # sequence_length: int,
-    # unique_morse_codes: tuple,
-    # unique_morse_code_counts: tuple,
-    index: int,
-) -> int:
+def DP_recursive_decode(index: int) -> int:
     """
-    Recursively compute the number of different messages you can decode from the sequence starting from the given index
-    Returns:
-        score (int): score = 1 per unique message (ie number of end-of-sequence-leaves), else 0 (ie intermediate nodes or non-end-of-sequence-leaf)
-    """
-    score = 0
+    Recursively computes the total number of distinct decoding paths
+    of a Morse code sequence starting from a given index.
 
-    # end_of_sequence_leaf returns 1
+    This implementation uses top-down dynamic programming (DP) with memoization
+    (via functools.lru_cache) to avoid redundant calculations.
+
+    Args:
+        index (int): Current position in the sequence to decode from.
+
+    Returns:
+        int: The total number of valid decoding paths from this index.
+             Each complete decoding path contributes 1.
+             Intermediate positions sum the scores of their children.
+    """
+    total_decodings = 0
+
+    # Base case: reached end of the sequence, count as 1 valid decoding
     if index == sequence_length:
         return 1
 
-    # parent returns sum of children score
-    for idx, morse in enumerate(unique_morse_codes):
-        if sequence.startswith(morse, index):  # startswith is already optimized in C
-            score += unique_morse_codes_count[idx] * DP_recursive_decode(
-                # sequence,
-                # sequence_length,
-                # unique_morse_codes,
-                # unique_morse_code_counts,
-                index
-                + len(morse),
+    # Explore all unique ciphers matching the sequence at the current index
+    for idx, cipher in enumerate(unique_ciphers):
+        if sequence.startswith(cipher, index):  # startswith is already optimized in C
+            total_decodings += unique_cipher_counts[idx] * DP_recursive_decode(
+                index + len(cipher)
             )
-
-    return score
+    return total_decodings
 
 
 sequence_length = len(sequence)
-unique_morse_codes, unique_morse_codes_count = get_unique_morse_codes_and_counts(words)
+ciphers = encrypt_iterable(words)
+unique_ciphers, unique_cipher_counts = get_unique_ciphers_and_counts(ciphers)
 
-
-result = DP_recursive_decode(
-    # sequence, sequence_length, unique_morse_codes, unique_morse_codes_count,
-    0
-)
+result = DP_recursive_decode(0)
 
 print(result)
 
-
 ###############################################################################################################################
+# copy paste this cell in CG IDE if you want to evaluate performance #
+######################################################################
 
 end_time = perf_counter()
 
 try:
-    eprint(("✅" if result == output else "❌") + " result is", result == output)
+    eprint(
+        ("✅" if result == output else "❌") + " result is",
+        result == output,
+        f"(got {result}, expected {output})",
+    )
 except Exception as e:
     print("[FINAL ERROR]", e, file=stderr, flush=True)
 
+eprint("\n          sequence:", sequence)
+eprint("   sequence length:", sequence_length)
+eprint("             words:", words)
+eprint("unique morse codes:", unique_ciphers)
+eprint("            counts:", unique_cipher_counts)
 
-eprint("\ncache info after one call:", DP_recursive_decode.cache_info())
-duration = end_time - start_time
-eprint("\nscript duration:", int(duration * 1e6), "µs")
-number = 1000
+eprint(f"\n{DP_recursive_decode.cache_info()}")
+duration_us = (end_time - start_time) * 1e6
+eprint(f"\n        script duration: {duration_us:.3f} µs")
+
+number = (
+    100  # test 4 will run out time and fail if you compute mean with 100 iterations
+)
 durations = []
-
 for _ in range(number):
-    start_time = perf_counter()
-    DP_recursive_decode(
-        # sequence, len(sequence), unique_morse_codes, unique_morse_codes_count,
-        0
-    )
-    end_time = perf_counter()
-    # print(end_time - start_time)
-
-    durations.append(end_time - start_time)
     DP_recursive_decode.cache_clear()
-    # print("Cache info after clear:", DP_recursive_decode.cache_info())
-
+    start_time = perf_counter()
+    DP_recursive_decode(0)
+    end_time = perf_counter()
+    durations.append(end_time - start_time)
 
 durations_us = [d * 1e6 for d in durations]
 
-print(
-    f"  mean duration: {mean(durations_us):.3f} µs (over {number} iterations of recursive function only)"
+eprint(
+    f" mean function duration: {mean(durations_us):.3f} µs (over {number} calls of the recursive function)"
 )
-print(f"            std: {stdev(durations_us):.3f} µs")
+eprint(f"                    std: {stdev(durations_us):.3f} µs")
 
-# best solutions:
+eprint(
+    f"duration of script head: {duration_us-mean(durations_us):.3f} µs (ie script duration - mean function duration)"
+)
 
-# 1 and 2. memoization could be done without @lru_cache with a list like
-# count = [0] * (sequence_length+1)
-# count[0] = 1
-# and computing iteratively from this list, index by index, the number of messages.
+##################################################################################################################################
+
+#######################################################################################################
+# Piste d'optimisation: remplacer la récursion + lru_cache par une programmation dynamique itérative: #
+#   Créer un tableau count de taille len(sequence)+1,                                                 #
+#   count[0] = 1 (une façon de dire qu’on a 1 façon de décoder la séquence vide),                     #
+#   Parcourir la séquence en testant les mots en morse à chaque position, et accumuler les décomptes. #
+#   C’est souvent plus rapide et ne pose pas problème de limite de récursion.                         #
+#######################################################################################################
+
+# 2 examples from CG board:
 
 """
 morse = {
@@ -302,6 +304,8 @@ for position, count in enumerate(counter):
                 
 print(counter[-1])
 """
+
+#########################################################################################
 
 """
 import sys
@@ -345,30 +349,4 @@ for end in range(1,morselen+1):
             count[end] += count[end-seglength] * wordlist.count(segment)
 
 print(count[-1]) 
-"""
-
-# 3. the recursive function could use 'remainingcode' instead of index (performance to be checked...)
-""" 
-import functools
-import sys
-sys.setrecursionlimit(4000)
-morse = {'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-', 'Y': '-.--', 'Z': '--..'}
-
-code = input()
-
-ciphers = []
-n = int(input())
-for _ in range(n):
-    word = input()
-    ciphers.append(''.join([morse[letter] for letter in word]))
-
-@functools.lru_cache()
-def hunt(remainingcode):
-    if len(remainingcode) == 0:
-        return 1
-    if not any(remainingcode.startswith(cipher) for cipher in ciphers):
-        return 0
-    return sum(hunt(remainingcode[len(cipher):]) for cipher in ciphers if remainingcode.startswith(cipher))
-
-print(hunt(code))
 """
