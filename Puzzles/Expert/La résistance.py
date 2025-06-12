@@ -77,8 +77,11 @@ inputs = [
     "TEST",
 ]
 
-# output = 2
+output = 2
 
+inputs = ["..............................................", "2", "E", "I"]
+
+output = 2971215073
 
 generator = (input for input in inputs)  # type: ignore
 
@@ -87,13 +90,8 @@ def input():
     return next(generator)
 
 
-########################################################################################################################################
-
-
 from sys import stderr  # noqa: E402
 from time import time  # noqa: E402
-from functools import lru_cache  # noqa: E402
-from collections import Counter  # noqa: E402
 
 start_time = time()
 
@@ -108,7 +106,19 @@ def eprint(*args, **kwargs):
         print("[EPRINT ERROR]", e, file=stderr, flush=True)
 
 
-morse = {
+from time import perf_counter  # noqa: E402
+from statistics import mean, stdev  # noqa: E402
+
+start_time = perf_counter()
+
+########################################################################################################################################
+
+
+from functools import lru_cache  # noqa: E402
+from collections import Counter  # noqa: E402
+
+
+morse_dict = {
     ".": "E",
     "-": "T",
     "..": "I",
@@ -137,91 +147,137 @@ morse = {
     "--.-": "Q",
 }
 
+inv_morse_dict = {value: key for key, value in list(morse_dict.items())}
 
-inv_morse = {value: key for key, value in list(morse.items())}
-
+# inputs
 sequence = input()
 n = int(input())
 words = [input() for _ in range(n)]
 
-sequence_length = len(sequence)
+
+# function computing tuple of morse codes of each word from an iterable
+def get_morse_codes(words):
+
+    # sub-function computing morse code from word
+    def get_morse_from_word(word):
+        morse_code = ""
+        for letter in word:
+            morse_code += inv_morse_dict[letter]
+        return morse_code
+
+    morse_codes = []
+    for word in words:
+        morse_codes.append(get_morse_from_word(word))
+
+    morse_codes = tuple(
+        morse_codes
+    )  # memoization needs hashable variables (ie immutable)
+    return morse_codes
 
 
-# compute tous les code morse des mots du dictionnaire
-def get_morse(word):
-    morse = ""
-    for letter in word:
-        morse += inv_morse[letter]
-    return morse
+# function computing unique morse codes from an iterable, their count and length
 
 
-morses = []
-for word in words:
-    morses.append(get_morse(word))
+def get_unique_morse_codes_and_counts(morse_codes):
+    morses_counter = Counter(morse_codes)
+    unique_morse_codes = tuple(key for key in list(morses_counter.keys()))
+    unique_morse_code_counts = tuple(
+        value for value in list(morses_counter.values())
+    )  # counts are necessary because different words may have same morse codes
+    # unique_morse_codes_length = tuple(len(morse) for morse in unique_morse_codes)
+    return unique_morse_codes, unique_morse_code_counts  # , unique_morse_codes_length
 
-# compute les morse identiques
 
-morses_counter = Counter(morses)
-unique_morses = [key for key in list(morses_counter.keys())]
-get_morse_count_by_idx = [
-    value for value in list(morses_counter.values())
-]  # list faster than dict to map morse -> count by idx
-
-# et leur longueur
-get_morse_length_by_idx = [len(morse) for morse in unique_morses]
-
-morse_max_length = max(get_morse_length_by_idx)
-
-eprint("sequence=", sequence)
-eprint("length=", sequence_length)
-eprint("words=", words)
-eprint("morses=", morses)
-eprint("counter=", morses_counter)
-eprint("max_length=", morse_max_length)
+# recursive function to compute number of different messages from a sequence
+# using Dynamic Programming and Memoization
 
 
 @lru_cache(maxsize=None)
-def DP_recursive_decode(index: int) -> int:
+def DP_recursive_decode(
+    # sequence: str,
+    # sequence_length: int,
+    # unique_morse_codes: tuple,
+    # unique_morse_code_counts: tuple,
+    index: int,
+) -> int:
     """
-    recursively find the number of different messages you can decode from the beginning of the sequence
-    returns sequence, and for all nodes : index after decode, score
-
-    Args:
-        index (int): position in the sequence to start decoding
-        score (int): 1 per end_of_sequence_leaf (ie 1 unique message)
+    Recursively compute the number of different messages you can decode from the sequence starting from the given index
+    Returns:
+        score (int): score = 1 per unique message (ie number of end-of-sequence-leaves), else 0 (ie intermediate nodes or non-end-of-sequence-leaf)
     """
     score = 0
 
     # end_of_sequence_leaf returns 1
     if index == sequence_length:
-        # eprint(sequence, "ends at", index)
         return 1
 
     # parent returns sum of children score
-    for idx, morse in enumerate(unique_morses):
-        if sequence.startswith(morse, index):
-            # eprint(sequence, "starts with", morse)
-            score += get_morse_count_by_idx[idx] * DP_recursive_decode(
-                index + len(morse)
+    for idx, morse in enumerate(unique_morse_codes):
+        if sequence.startswith(morse, index):  # startswith is already optimized in C
+            score += unique_morse_codes_count[idx] * DP_recursive_decode(
+                # sequence,
+                # sequence_length,
+                # unique_morse_codes,
+                # unique_morse_code_counts,
+                index
+                + len(morse),
             )
 
     return score
 
 
-result = DP_recursive_decode(0)
+sequence_length = len(sequence)
+unique_morse_codes, unique_morse_codes_count = get_unique_morse_codes_and_counts(words)
+
+
+result = DP_recursive_decode(
+    # sequence, sequence_length, unique_morse_codes, unique_morse_codes_count,
+    0
+)
 
 print(result)
 
-eprint("duration=", time() - start_time)
+
+###############################################################################################################################
+
+end_time = perf_counter()
+
 try:
-    eprint(result == output)  # type: ignore
+    eprint(("✅" if result == output else "❌") + " result is", result == output)
 except Exception as e:
     print("[FINAL ERROR]", e, file=stderr, flush=True)
 
 
+eprint("\ncache info after one call:", DP_recursive_decode.cache_info())
+duration = end_time - start_time
+eprint("\nscript duration:", int(duration * 1e6), "µs")
+number = 1000
+durations = []
+
+for _ in range(number):
+    start_time = perf_counter()
+    DP_recursive_decode(
+        # sequence, len(sequence), unique_morse_codes, unique_morse_codes_count,
+        0
+    )
+    end_time = perf_counter()
+    # print(end_time - start_time)
+
+    durations.append(end_time - start_time)
+    DP_recursive_decode.cache_clear()
+    # print("Cache info after clear:", DP_recursive_decode.cache_info())
+
+
+durations_us = [d * 1e6 for d in durations]
+
+print(
+    f"  mean duration: {mean(durations_us):.3f} µs (over {number} iterations of recursive function only)"
+)
+print(f"            std: {stdev(durations_us):.3f} µs")
+
 # best solutions:
 
-# 1.memoization could be done without @lru_cache with a list like
+# 1 and 2. memoization could be done without @lru_cache with a list like
 # count = [0] * (sequence_length+1)
 # count[0] = 1
 # and computing iteratively from this list, index by index, the number of messages.
@@ -291,7 +347,7 @@ for end in range(1,morselen+1):
 print(count[-1]) 
 """
 
-# the recursive function could use 'remainingcode' instead of index (performance to be checked...)
+# 3. the recursive function could use 'remainingcode' instead of index (performance to be checked...)
 """ 
 import functools
 import sys
