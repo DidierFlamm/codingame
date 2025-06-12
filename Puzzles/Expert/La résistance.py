@@ -67,6 +67,8 @@ Sortie
 2
 """
 
+# example test
+
 inputs = [
     "......-...-..---.-----.-..-..-..",
     "5",
@@ -77,15 +79,16 @@ inputs = [
     "TEST",
 ]
 
-# example test
-
 output = 2
+
+# CG last test
 
 inputs = ["..............................................", "2", "E", "I"]
 
-# last CG test
-
 output = 2971215073
+
+
+######################################################################
 
 generator = (input for input in inputs)  # type: ignore
 
@@ -95,8 +98,8 @@ def input():
 
 
 ######################################################################
-# do not copy paste code above this line in CG IDE                   #
-#######################################################################################################################################
+# do not copy paste the code above this line in CG IDE               #
+######################################################################
 # copy paste this cell in CG IDE if you want to evaluate performance #
 ######################################################################
 
@@ -105,7 +108,7 @@ from time import time  # noqa: E402
 
 start_time = time()
 
-DEBUG_MODE = 1  # 1 to view debug messages returned by eprint function, else 0
+DEBUG_MODE = 1  # 1 to print debug messages, else 0
 
 
 def eprint(*args, **kwargs):
@@ -121,9 +124,9 @@ from statistics import mean, stdev  # noqa: E402
 
 start_time = perf_counter()
 
-########################################################################################################################################
-# copy paste this cell in CG IDE #
-##################################
+######################################################################
+# copy paste this cell in CG IDE                                     #
+######################################################################
 from functools import lru_cache  # noqa: E402
 from collections import Counter  # noqa: E402
 
@@ -225,7 +228,7 @@ result = DP_recursive_decode(0)
 
 print(result)
 
-###############################################################################################################################
+######################################################################
 # copy paste this cell in CG IDE if you want to evaluate performance #
 ######################################################################
 
@@ -233,9 +236,9 @@ end_time = perf_counter()
 
 try:
     eprint(
-        ("✅" if result == output else "❌") + " result is",
+        ("✅" if result == output else "❌"),
         result == output,
-        f"(got {result}, expected {output})",
+        f": got {result}, expected {output}",
     )
 except Exception as e:
     print("[FINAL ERROR]", e, file=stderr, flush=True)
@@ -272,10 +275,8 @@ eprint(
     f"duration of script head: {duration_us-mean(durations_us):.3f} µs (ie script duration - mean function duration)"
 )
 
-##################################################################################################################################
-
 #######################################################################################################
-# Piste d'optimisation: remplacer la récursion + lru_cache par une programmation dynamique itérative: #
+# Variante : remplacer la récursion + lru_cache par une programmation dynamique itérative:            #
 #   Créer un tableau count de taille len(sequence)+1,                                                 #
 #   count[0] = 1 (une façon de dire qu’on a 1 façon de décoder la séquence vide),                     #
 #   Parcourir la séquence en testant les mots en morse à chaque position, et accumuler les décomptes. #
