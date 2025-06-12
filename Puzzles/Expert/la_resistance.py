@@ -127,7 +127,7 @@ start_time = perf_counter()
 ######################################################################
 # copy paste this cell in CG IDE                                     #
 ######################################################################
-from functools import lru_cache  # noqa: E402
+import functools  # noqa: E402
 from collections import Counter  # noqa: E402
 
 sequence = input()
@@ -164,31 +164,32 @@ morse_dict = {
 }
 
 
-def encrypt(word):
-    cipher = ""
+def encode(word):
+    code = ""
     for letter in word:
-        cipher += morse_dict[letter]
-    return cipher
+        code += morse_dict[letter]
+    return code
 
 
-def encrypt_iterable(words):
-    ciphers = []
+def encode_dictionary(words):
+
+    codes = []
     for word in words:
-        ciphers.append(encrypt(word))
+        codes.append(encode(word))
     # returns tuple because memoization needs immutable variables for hashing
-    return tuple(ciphers)
+    return tuple(codes)
 
 
-def get_unique_ciphers_and_counts(ciphers):
-    cipher_counter = Counter(ciphers)
-    unique_ciphers = tuple(key for key in list(cipher_counter.keys()))
-    unique_cipher_counts = tuple(
-        value for value in list(cipher_counter.values())
-    )  # ciphers are counted because different words may have the same cipher
-    return unique_ciphers, unique_cipher_counts
+def get_unique_codes_and_counts(codes):
+    code_counter = Counter(codes)
+    unique_codes = tuple(key for key in list(code_counter.keys()))
+    unique_code_counts = tuple(
+        value for value in list(code_counter.values())
+    )  # codes are counted because different words may have the same code
+    return unique_codes, unique_code_counts
 
 
-@lru_cache(maxsize=None)
+@functools.cache
 def DP_recursive_decode(index: int) -> int:
     """
     Recursively computes the total number of distinct decoding paths
@@ -211,18 +212,18 @@ def DP_recursive_decode(index: int) -> int:
     if index == sequence_length:
         return 1
 
-    # Explore all unique ciphers matching the sequence at the current index
-    for idx, cipher in enumerate(unique_ciphers):
-        if sequence.startswith(cipher, index):  # startswith is already optimized in C
-            total_decodings += unique_cipher_counts[idx] * DP_recursive_decode(
-                index + len(cipher)
+    # Explore all unique codes matching the sequence at the current index
+    for idx, code in enumerate(unique_codes):
+        if sequence.startswith(code, index):  # startswith is already optimized in C
+            total_decodings += unique_code_counts[idx] * DP_recursive_decode(
+                index + len(code)
             )
     return total_decodings
 
 
 sequence_length = len(sequence)
-ciphers = encrypt_iterable(words)
-unique_ciphers, unique_cipher_counts = get_unique_ciphers_and_counts(ciphers)
+codes = encode_dictionary(words)
+unique_codes, unique_code_counts = get_unique_codes_and_counts(codes)
 
 result = DP_recursive_decode(0)
 
@@ -246,8 +247,8 @@ except Exception as e:
 eprint("\n          sequence:", sequence)
 eprint("   sequence length:", sequence_length)
 eprint("             words:", words)
-eprint("unique morse codes:", unique_ciphers)
-eprint("            counts:", unique_cipher_counts)
+eprint("unique morse codes:", unique_codes)
+eprint("            counts:", unique_code_counts)
 
 eprint(f"\n{DP_recursive_decode.cache_info()}")
 duration_us = (end_time - start_time) * 1e6
@@ -276,7 +277,7 @@ eprint(
 )
 
 #######################################################################################################
-# Variante : remplacer la récursion + lru_cache par une programmation dynamique itérative:            #
+# Variante : remplacer la récursion + @functools.cache par une programmation dynamique itérative:     #
 #   Créer un tableau count de taille len(sequence)+1,                                                 #
 #   count[0] = 1 (une façon de dire qu’on a 1 façon de décoder la séquence vide),                     #
 #   Parcourir la séquence en testant les mots en morse à chaque position, et accumuler les décomptes. #
