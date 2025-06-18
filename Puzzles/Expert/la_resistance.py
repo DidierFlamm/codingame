@@ -128,13 +128,12 @@ start_time = perf_counter()
 # copy paste this cell in CG IDE                                     #
 ######################################################################
 import functools  # noqa: E402
-from collections import Counter  # noqa: E402
 
 sequence = input()
 n = int(input())
 words = [input() for _ in range(n)]
 
-morse_dict = {
+morse = {
     "A": ".-",
     "B": "-...",
     "C": "-.-.",
@@ -164,29 +163,20 @@ morse_dict = {
 }
 
 
-def encode(word):
-    code = ""
-    for letter in word:
-        code += morse_dict[letter]
-    return code
+def encode_word(word: str) -> str:
+    return "".join(morse[letter] for letter in word)
 
 
-def encode_dictionary(words):
-
-    codes = []
-    for word in words:
-        codes.append(encode(word))
-    # returns tuple because memoization needs immutable variables for hashing
-    return tuple(codes)
+def encode_list(words: list[str]) -> tuple[str, ...]:
+    return tuple(encode_word(word) for word in words)
 
 
-def get_unique_codes_and_counts(codes):
-    code_counter = Counter(codes)
-    unique_codes = tuple(key for key in list(code_counter.keys()))
-    unique_code_counts = tuple(
-        value for value in list(code_counter.values())
-    )  # codes are counted because different words may have the same code
-    return unique_codes, unique_code_counts
+def get_unique_codes(words: list[str]) -> dict[str, int]:
+    codes = encode_list(words)
+    unique_codes = {}
+    for code in codes:
+        unique_codes[code] = unique_codes.get(code, 0) + 1
+    return unique_codes
 
 
 @functools.cache
@@ -208,22 +198,22 @@ def DP_recursive_decode(index: int) -> int:
     """
     total_decodings = 0
 
-    # Base case: reached end of the sequence, count as 1 valid decoding
+    # Base case: reached end of the sequence
     if index == sequence_length:
         return 1
 
     # Explore all unique codes matching the sequence at the current index
-    for idx, code in enumerate(unique_codes):
-        if sequence.startswith(code, index):  # startswith is already optimized in C
-            total_decodings += unique_code_counts[idx] * DP_recursive_decode(
+    for code in unique_codes:
+        if sequence.startswith(code, index):
+            total_decodings += unique_codes[code] * DP_recursive_decode(
                 index + len(code)
             )
     return total_decodings
 
 
 sequence_length = len(sequence)
-codes = encode_dictionary(words)
-unique_codes, unique_code_counts = get_unique_codes_and_counts(codes)
+codes = encode_list(words)
+unique_codes = get_unique_codes(words)
 
 result = DP_recursive_decode(0)
 
@@ -244,11 +234,10 @@ try:
 except Exception as e:
     print("[FINAL ERROR]", e, file=stderr, flush=True)
 
-eprint("\n          sequence:", sequence)
-eprint("   sequence length:", sequence_length)
-eprint("             words:", words)
-eprint("unique morse codes:", unique_codes)
-eprint("            counts:", unique_code_counts)
+eprint("\n      sequence:", sequence)
+eprint("sequence length:", sequence_length)
+eprint("         words:", words)
+eprint("  unique codes:", unique_codes)
 
 eprint(f"\n{DP_recursive_decode.cache_info()}")
 duration_us = (end_time - start_time) * 1e6
